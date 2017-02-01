@@ -29,20 +29,29 @@ class RetrieveResultsHandler(tornado.web.RequestHandler):
     def get(self):
         identifier = self.request.body_arguments["identifier"]
         project_path = get_project_path(identifier)
+        file_name = os.path.join(project_path, 'final_videos', 'highlight.mp4')
 
-        print 'creating archive'
-        zf = zipfile.ZipFile(identifier+'_write.zip', mode='w')
-        for subdir, dirs, files in os.walk(project_path):
-            for file in files:
-                try:
-                    print 'Adding {}'.format(file)
-                    zf.write(file)
-                except Exception as e:
-                    print e
-                finally:
-                    print 'closing'
-                    zf.close()
+        #print 'creating archive'
+        #zf = zipfile.ZipFile(identifier+'_write.zip', mode='w')
+        #for subdir, dirs, files in os.walk(project_path):
+        #    for file in files:
+        #        try:
+        #            print 'Adding {}'.format(file)
+        #            zf.write(file)
+        #        except Exception as e:
+        #            print e
+        #        finally:
+        #            print 'closing'
+        #            zf.close()
 
-        self.finish("Retrieve Results")
+        self.set_header('Content-Type', 'application/octet-stream')
+        self.set_header('Content-Disposition', 'attachment; filename=' + file_name)
+        with open(file_name, 'rb') as f:
+            while True:
+                data = f.read(2048)
+                if not data:
+                    break
+                self.write(data)
+        self.finish()
 
 
