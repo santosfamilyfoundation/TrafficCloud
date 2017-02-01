@@ -2,7 +2,7 @@
 
 import tornado.web
 
-from trafficcloud.pm import default_config_dict, update_project_config
+from traffic_cloud_utils.pm import default_config_dict, update_project_config
 
 class ConfigHandler(tornado.web.RequestHandler):
     """

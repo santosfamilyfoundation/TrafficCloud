@@ -1,5 +1,4 @@
 import os
-from traffic_cloud_utils.app_config import AppConfig as ac
 import subprocess
 import json
 import matplotlib.pyplot as plt
