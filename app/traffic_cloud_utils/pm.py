@@ -18,13 +18,15 @@ import uuid
 
 from app_config import get_project_path, get_project_config_path, config_section_exists, update_config_without_sections
 from video import get_framerate
+from statusHelper import StatusHelper
 
 def create_project(identifier, video_dict):
     config_dict = {}
-    _update_config_dict_with_defaults(config_dict)
 
+    _update_config_dict_with_defaults(config_dict)
     _translate_config_dict(config_dict)
     _create_project_dir(identifier, config_dict, video_dict)
+    StatusHelper.initalize_project(identifier) # This must be called after the config path has been created
 
 def update_homography(identifier, homography_path, unitpixelratio):
     pass

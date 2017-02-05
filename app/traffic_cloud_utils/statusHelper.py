@@ -5,15 +5,14 @@ from app_config import get_project_config_path, update_config_with_sections, get
 
 class Status(object):
     class StatusType:
-        UPLOAD_VIDEO = "upload_video"
         UPLOAD_HOMOGRAPHY = "upload_homography"
         CONFIGURATION_TEST = "configuration_test"
-        FEATURE_TRACKING = "feature_tracking"
         OBJECT_TRACKING = "object_tracking"
         SAFETY_ANALYSIS = "safety_analysis"
         HIGHLIGHT_VIDEO = "highlight_video"
 
     class Status:
+        FAILURE = -1
         INCOMPLETE = 0
         IN_PROGRESS = 1
         COMPLETE = 2
@@ -21,10 +20,8 @@ class Status(object):
     @staticmethod
     def create_status_dict():
         return {
-            self.Type.UPLOAD_VIDEO: 0,
             self.Type.UPLOAD_HOMOGRAPHY: 0,
             self.Type.CONFIGURATION_TEST: 0,
-            self.Type.FEATURE_TRACKING: 0,
             self.Type.OBJECT_TRACKING: 0,
             self.Type.SAFETY_ANALYSIS: 0,
             self.Type.HIGHLIGHT_VIDEO: 0,
@@ -39,8 +36,9 @@ class StatusHelper(object):
             update_config_with_sections(config_path, "status", status_type, status)
 
     @staticmethod
-    def set_status(identifier, status_type, status):
+    def set_status(identifier, status_type, val):
         config_path = get_project_config_path(identifier)
+        status = str(val)
         update_config_with_sections(config_path, "status", status_type, status)
 
     @staticmethod

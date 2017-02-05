@@ -43,7 +43,7 @@ def update_config_with_sections(config_path, section, option, value):
     if section not in cfp.sections():  # If the given section does not exist,
         cfp.add_section(section)        # then create it.
     cfp.set(section, option, value)  # Set the option-value pair
-    with open(config_paths, "wb") as cfg_file:
+    with open(config_path, "wb") as cfg_file:
         cfp.write(cfg_file)  # Write changes
 
 

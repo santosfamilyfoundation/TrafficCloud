@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import tornado.escape
 import tornado.web
 from traffic_cloud_utils.statusHelper import StatusHelper
 
@@ -15,10 +14,8 @@ class StatusHandler(tornado.web.RequestHandler):
 
     @apiParam {String} identifier The identifier of the project on which to return status information.
 
-    @apiSuccess upload_video The status of the video uploading.
     @apiSuccess upload_homography The status of homography file uploading.
     @apiSuccess configuration_test The status of the configuration test.
-    @apiSuccess feature_tracking The status of feature tracking.
     @apiSuccess object_tracking The status of object tracking.
     @apiSuccess safety_analysis The status of performing safety analysis.
     @apiSuccess highlight_video The status of creating the highlight video.
@@ -26,8 +23,8 @@ class StatusHandler(tornado.web.RequestHandler):
     @apiError error_message The error message to display. (Will return unique error message if object tracking has NOT been run on specified project)
     """
     def post(self):
-        data = tornado.escape.json_decode(self.request.body)
-        status_dict = StatusHelper.get_status(data['project_id'])
+        identifier = self.get_body_argument('identifier')
+        status_dict = StatusHelper.get_status(identifier)
         if status_dict != None:
         	self.write(status_dict)
         else:
