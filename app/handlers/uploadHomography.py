@@ -45,10 +45,9 @@ class UploadHomographyHandler(tornado.web.RequestHandler):
         project_dir = get_project_path(self.identifier)
         aerial_pts = self.get_body_argument('aerial_pts')
         camera_pts = self.get_body_argument('camera_pts')
-
         homography, mask = cv2.findHomography(\
-                            self.up_ratio*np.array(literal_eval(aerial_pts)),\
-                            np.array(literal_eval(camera_pts)))
+                            np.array(literal_eval(camera_pts)),\
+                            self.up_ratio*np.array(literal_eval(aerial_pts)))
         np.savetxt(os.path.join(project_dir,'homography','homography.txt'),homography)
         #TO-DO Write the unit_pixel_ratio to some config file
         for key,value in self.files.iteritems():

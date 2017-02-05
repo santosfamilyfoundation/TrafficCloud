@@ -39,44 +39,44 @@ class CreateHighlightVideoHandler(baseHandler.BaseHandler):
 
     @staticmethod
     def handler(identifier, ttc_threshold, vehicle_only):
-        StatusHelper.set_status(self.identifier, "highlight_video", 1)
+        StatusHelper.set_status(identifier, "highlight_video", 1)
         project_dir = get_project_path(identifier)
         if not os.path.exists(project_dir):
-            StatusHelper.set_status(self.identifier, "highlight_video", -1)
+            StatusHelper.set_status(identifier, "highlight_video", -1)
             return (500, 'Project directory does not exist. Check your identifier?')
 
         db = os.path.join(project_dir, 'run', 'results.sqlite')
         #TO-DO: Check to see if tables like "interactions" exist
         if not os.path.exists(db):
-            StatusHelper.set_status(self.identifier, "highlight_video", -1)
+            StatusHelper.set_status(identifier, "highlight_video", -1)
             return (500, 'Database file does not exist. Trajectory analysis needs to be called first ')
 
         video_path = get_project_video_path(identifier)
         if not os.path.exists(video_path):
-            StatusHelper.set_status(self.identifier, "highlight_video", -1)
+            StatusHelper.set_status(identifier, "highlight_video", -1)
             return (500, 'Source video file does not exist.  Was the video uploaded?')
 
         try:
             alterInteractionsWithRoadUserType(db)
         except Exception as error_message:
-            StatusHelper.set_status(self.identifier, "highlight_video", -1)
-            return (500, "Alter Interactions Table with Road User Type failed\n" + error_message)
+            StatusHelper.set_status(identifier, "highlight_video", -1)
+            return (500, "Alter Interactions Table with Road User Type failed\n" + str(error_message))
 
         ttc_threshold_frames = int(ttc_threshold * float(get_framerate(video_path)))
 
         try:
             near_misses = getNearMissFrames(db, ttc_threshold_frames, vehicle_only)
         except Exception as error_message:
-            StatusHelper.set_status(self.identifier, "highlight_video", -1)
-            return (500, error_message)
+            StatusHelper.set_status(identifier, "highlight_video", -1)
+            return (500, str(error_message))
 
         try:
             create_highlight_video(project_dir, video_path, near_misses)
         except Exception as error_message:
-            StatusHelper.set_status(self.identifier, "highlight_video", -1)
-            return (500, error_message)
+            StatusHelper.set_status(identifier, "highlight_video", -1)
+            return (500, str(error_message))
 
-        StatusHelper.set_status(self.identifier, "highlight_video", 2)
+        StatusHelper.set_status(identifier, "highlight_video", 2)
         return (200, "Success")
 
 

@@ -41,10 +41,10 @@ class SafetyAnalysisHandler(tornado.web.RequestHandler):
 
     @staticmethod
     def handler(identifier, prediction_method=None):
-        StatusHelper.set_status(self.identifier, "safety_analysis", 1)
+        StatusHelper.set_status(identifier, "safety_analysis", 1)
         project_path = get_project_path(identifier)
         if not os.path.exists(project_path):
-            StatusHelper.set_status(self.identifier, "safety_analysis", -1)
+            StatusHelper.set_status(identifier, "safety_analysis", -1)
             return (500, 'Project directory does not exist. Check your identifier?')
 
         config_path = os.path.join(project_path, "tracking.cfg")
@@ -65,10 +65,10 @@ class SafetyAnalysisHandler(tornado.web.RequestHandler):
 
             subprocess.check_output(["safety-analysis.py", "--cfg", config_path, "--prediction-method", prediction_method])
         except subprocess.CalledProgramError as err_msg:
-            StatusHelper.set_status(self.identifier, "safety_analysis", -1)
+            StatusHelper.set_status(identifier, "safety_analysis", -1)
             return (500, err_msg.output)
 
-        StatusHelper.set_status(self.identifier, "safety_analysis", 2)
+        StatusHelper.set_status(identifier, "safety_analysis", 2)
         return (200, "Success")
 
 
