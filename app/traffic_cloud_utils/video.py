@@ -46,8 +46,9 @@ def create_highlight_video(project_path, video_path, list_of_near_misses):
         # Create a short video snippet of the near miss interaction
         snippet_number = 2*i + 1
         pts_multiplier = 3.0 # > 1.0 = slower ; < 1.0 = faster than
+        print [object_id1, object_id2]
         create_video_snippet(project_path, video_path, videos_folder, temp_video_prefix, snippet_number,
-            max(0, start_frame-30), min(upper_frame_limit, end_frame+30), pts_multiplier)
+            max(0, start_frame-30), min(upper_frame_limit, end_frame+30), pts_multiplier, [object_id1, object_id2])
 
         # Get resolution of video
         snippet_path = os.path.join(videos_folder, temp_video_prefix + str(snippet_number) + ".mpg")
@@ -153,7 +154,7 @@ def create_video_from_images(images_dir, prefix, video_dir, video_filename, fram
     renumber_frames(images_dir, 0, prefix, extension)
     convert_frames_to_video(framerate, images_dir, video_dir, prefix, video_filename, 1.0)
 
-def create_video_snippet(project_path, video_path, videos_folder, file_prefix, video_number, start_frame, end_frame, pts_multiplier=1.0):
+def create_video_snippet(project_path, video_path, videos_folder, file_prefix, video_number, start_frame, end_frame, pts_multiplier=1.0, interacting_objects=None):
     images_folder = os.path.join(project_path, "temp_images")
     db_path = os.path.join(project_path, "run", "results.sqlite")
     temp_image_prefix = "image-"
@@ -164,7 +165,20 @@ def create_video_snippet(project_path, video_path, videos_folder, file_prefix, v
 
     # Delete old images, and recreate them in the right place
     delete_files(images_folder, temp_image_prefix, ["png"], excluded_files=[tracking_filename, highlight_filename])
-    subprocess.call(["display-trajectories.py", "-i", video_path,"-d", db_path, "-o", os.path.join(project_path, "homography", "homography.txt"), "-t", "object", "--save-images", "-f", str(start_frame), "--last-frame", str(end_frame), "--output-directory", images_folder])
+
+    # Call display trajectories
+    display_trajectories_call = ["display-trajectories.py",
+        "-i", video_path,
+        "-d", db_path,
+        "-o", os.path.join(project_path, "homography", "homography.txt"),
+        "-t", "object",
+        "--save-images",
+        "-f", str(start_frame),
+        "--last-frame", str(end_frame),
+        ]
+    if interacting_objects is not None:
+        display_trajectories_call.extend(['--interacting-objects', str(interacting_objects[0]), str(interacting_objects[1])])
+    subprocess.call(display_trajectories_call)
 
     # Get the frames, and create a short video out of them
     renumber_frames(images_folder, start_frame, temp_image_prefix, "png")

@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import random
-from thinkstats2 import Cdf
+from thinkstats2 import Cdf, EstimatedPdf
 import thinkplot
 
 from numpy.linalg.linalg import inv
@@ -339,8 +339,10 @@ def vel_cdf(filename, fps, speed_limit=25, dir=None, only_vehicle=True):
             yvels = []
 
     cdf = Cdf(obj_vels)
+    kdepdf = EstimatedPdf(obj_vels)
     pr = cdf.PercentileRank(speed_limit)
 
+    thinkplot.PrePlot(1)
     titlestring = "{:0.1f} % of {} are exceeding the {} mph limit".format(
         100 - pr,
         'vehicles' if only_vehicle else 'road users',
@@ -350,6 +352,15 @@ def vel_cdf(filename, fps, speed_limit=25, dir=None, only_vehicle=True):
     thinkplot.Config(title=titlestring, xlabel='Velocity (mph)', ylabel='CDF')
     if dir is not None:
         thinkplot.Save(os.path.join(dir, 'velocityCDF'), formats=['jpg'], bbox_inches='tight')
+    else:
+        thinkplot.Show()
+
+    thinkplot.PrePlot(1)
+    thinkplot.Pdf(kdepdf)
+    thinkplot.Vlines(speed_limit, 0, 0.05)
+    thinkplot.Config(title=titlestring, xlabel='Velocity (mph)', ylabel='PDF')
+    if dir is not None:
+        thinkplot.Save(os.path.join(dir, 'velocityPDF'), formats=['jpg'], bbox_inches='tight')
     else:
         thinkplot.Show()
 
