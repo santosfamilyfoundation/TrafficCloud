@@ -4,7 +4,7 @@ import os
 import tornado.web
 
 from traffic_cloud_utils.app_config import get_project_path, get_project_video_path, update_config_without_sections, get_config_without_sections
-import video
+from traffic_cloud_utils import video
 from traffic_cloud_utils.emailHelper import EmailHelper
 
 class RetrieveResultsHandler(tornado.web.RequestHandler):
@@ -32,7 +32,6 @@ class RetrieveResultsHandler(tornado.web.RequestHandler):
         file_name = os.path.join(project_path, 'final_videos', 'highlight.mp4')
 
         zipf = zipfile.ZipFile('results.zip', 'w', zipfile.ZIP_DEFLATED)
-        zipdir( , zipf)
         # TODO only handles highlight video right now, need to add results report wherever it is
         for root, dirs, files in os.walk(file_name):
             for file in files:
