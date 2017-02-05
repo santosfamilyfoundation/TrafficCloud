@@ -31,27 +31,26 @@ class RetrieveResultsHandler(tornado.web.RequestHandler):
         project_path = get_project_path(identifier)
         file_name = os.path.join(project_path, 'final_videos', 'highlight.mp4')
 
-        #print 'creating archive'
-        #zf = zipfile.ZipFile(identifier+'_write.zip', mode='w')
-        #for subdir, dirs, files in os.walk(project_path):
-        #    for file in files:
-        #        try:
-        #            print 'Adding {}'.format(file)
-        #            zf.write(file)
-        #        except Exception as e:
-        #            print e
-        #        finally:
-        #            print 'closing'
-        #            zf.close()
+        zipf = zipfile.ZipFile('results.zip', 'w', zipfile.ZIP_DEFLATED)
+        zipdir( , zipf)
+        # TODO only handles highlight video right now, need to add results report wherever it is
+        for root, dirs, files in os.walk(file_name):
+            for file in files:
+                zipf.write(os.path.join(root, file))
+        zipf.close()
+        # TODO catch exception if zip not created?
+        results_path = os.path.join(project_path, 'results.zip')
 
         self.set_header('Content-Type', 'application/octet-stream')
-        self.set_header('Content-Disposition', 'attachment; filename=' + file_name)
+        self.set_header('Content-Description', 'File Transfer')
+        self.set_header('Content-Disposition', 'attachment; filename=' + results_path)
         with open(file_name, 'rb') as f:
-            while True:
-                data = f.read(2048)
-                if not data:
-                    break
-                self.write(data)
-        self.finish()
-
-
+            try:
+                while True:
+                    data = f.read(2048)
+                    if not data:
+                        break
+                    self.write(data)
+                self.finish()
+            except Exception as e:
+                print e
