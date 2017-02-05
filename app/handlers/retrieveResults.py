@@ -23,11 +23,10 @@ class RetrieveResultsHandler(tornado.web.RequestHandler):
     """
 
     def post(self):
-        identifier = self.request.body_arguments["identifier"]
-
+        identifier = self.get_body_arguments()"identifier")
 
     def get(self):
-        identifier = self.request.body_arguments["identifier"]
+        identifier = self.get_body_arguments("identifier")
         project_path = get_project_path(identifier)
         file_name = os.path.join(project_path, 'final_videos', 'highlight.mp4')
 
