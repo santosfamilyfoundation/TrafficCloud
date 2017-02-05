@@ -23,7 +23,7 @@ class RetrieveResultsHandler(tornado.web.RequestHandler):
     """
 
     def post(self):
-        identifier = self.get_body_arguments()"identifier")
+        identifier = self.get_body_arguments("identifier")
 
     def get(self):
         identifier = self.get_body_arguments("identifier")
