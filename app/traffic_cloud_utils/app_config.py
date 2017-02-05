@@ -3,7 +3,7 @@ from ConfigParser import SafeConfigParser
 import os
 
 class AppConfig(object):
-    PROJECT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "project_dir"))
+    PROJECT_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..", "project_dir"))
 
 def get_base_project_dir(identifier):
     return AppConfig.PROJECT_DIR

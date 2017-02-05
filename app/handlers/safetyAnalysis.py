@@ -5,14 +5,13 @@ import subprocess
 import tornado.web
 
 from traffic_cloud_utils.app_config import get_project_path, get_project_video_path, update_config_without_sections, get_config_without_sections
-import pm
 from traffic_cloud_utils.emailHelper import EmailHelper
 
 class SafetyAnalysisHandler(tornado.web.RequestHandler):
     """
     @api {post} /safetyAnalysis/ Safety Analysis
     @apiName SafetyAnalysis
-    @apiVersion 0.0.0
+    @apiVersion 0.1.0
     @apiGroup Analysis
     @apiDescription Calling this route will perform safety analysis on a project that object tracking has already been run on. When the analysis is done, an email will be sent to the project's user. (Due to the potentially long run duration, it is infeasible to return the results as a response to the HTTP request. In order to check the status of the testing and view results, see the Status group of messages.)
 
@@ -24,31 +23,45 @@ class SafetyAnalysisHandler(tornado.web.RequestHandler):
     @apiError error_message The error message to display. (Will return unique error message if object tracking has NOT been run on specified project)
     """
     def post(self):
-        self.safetyAnalysis(self.request.body_arguments["identifier"])
+        status_code, reason = self.handler(self.get_body_argument("identifier"))
 
-        subject = "Your video has finished processing."
-        message = "Hello,\n\tWe have finished looking through your data and identifying any dangerous interactions.\nThank you for your patience,\nThe Santos Team"
+        if status_code == 200:
+            subject = "Your video has finished processing."
+            message = "Hello,\n\tWe have finished looking through your data and identifying any dangerous interactions.\nThank you for your patience,\nThe Santos Team"
 
-        EmailHelper.send_email(self.request.body_arguments["email"], subject, message)
+            EmailHelper.send_email(self.get_body_argument("email"), subject, message)
+            self.finish("Safety Analysis")
+        else:
+            raise tornado.web.HTTPError(reason=reason, status_code=status_code)
 
-        self.finish("Safety Analysis")
 
-
-    def safetyAnalysis(self, identifier, prediction_method=None):
+    @staticmethod
+    def handler(identifier, prediction_method=None):
 
         project_path = get_project_path(identifier)
+        if not os.path.exists(project_path):
+           return (500, 'Project directory does not exist. Check your identifier?')
 
-        config_path = os.path.join(project_path, "run", "run_tracking.cfg")
+        config_path = os.path.join(project_path, "tracking.cfg")
         db_path = os.path.join(project_path, "run", "results.sqlite")
         update_dict = {
             'video-filename': get_project_video_path(identifier), # use absolute path to video on server
             'database-filename': db_path # use absolute path to database
         }
+        
         update_config_without_sections(config_path, update_dict)
 
         if prediction_method is None:
             prediction_method = 'cv' # default to the least resource intensive method
 
         # Predict Interactions between road users and compute safety metrics describing them
-        subprocess.call(["safety-analysis.py", "--cfg", config_path, "--prediction-method", prediction_method])
+        try:
+            print "Running safety analysis. Please wait as this may take a while."
+            subprocess.call(["safety-analysis.py", "--cfg", config_path, "--prediction-method", prediction_method])
+        except Exception as err_msg:
+            return (500, err_msg)
+
+        return (200, "Success")
+
+
 

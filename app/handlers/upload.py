@@ -3,7 +3,6 @@
 import tornado.web
 import os
 import uuid
-# from trafficcloud import api
 
 class UploadHandler(tornado.web.RequestHandler):
     
@@ -42,8 +41,6 @@ class UploadHandler(tornado.web.RequestHandler):
         name_body_dict = self.parse_request(self.request.files)
         # TODO: Save email
         project_identifier = api.saveFiles(name_body_dict)
-
-        # api.runTrajectoryAnalysis(project_identifier)
 
         d = {'project_identifier': project_identifier}
         self.write(d)

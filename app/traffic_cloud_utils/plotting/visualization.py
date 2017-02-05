@@ -354,10 +354,16 @@ def vel_cdf(filename, fps, speed_limit=25, dir=None, only_vehicle=True):
     else:
         thinkplot.Show()
 
-def road_user_chart(fig, filename):
-    """
-    Obtains trajectory (position and velocity data) from object-trajectory table)
-    Creates visualizations.
+def road_user_counts(filename):
+    """obtains road user count information
+
+    Arguments
+    ---------
+    filename: sqlite database strings
+
+    Returns
+    -------
+    roadusercounts: dictionary mapping user type strings to counts
     """
     connection = sqlite3.connect(filename)
     cursor = connection.cursor()
@@ -379,13 +385,18 @@ def road_user_chart(fig, filename):
 
     # print roadusers
 
-    numusers = []
+    roadusercounts = {}
     for user in userlist:
-        numusers.append(len(roadusers[user]))
+        roadusercounts[user] = len(roadusers[user])
 
-    # print numusers
+    return roadusercounts
+     
+def road_user_chart(filename):
+    """Creates a bar graph chart of road user counts"""
+    roadusercounts = road_user_counts(filename)
+    userlist, numusers = zip(*roadusercounts.items())
 
-    # fig = plt.figure()
+    fig = plt.figure()
     ax = fig.add_subplot(111)
 
     width = 0.5
@@ -402,7 +413,7 @@ def road_user_chart(fig, filename):
     connection.commit()
     connection.close()
 
-def road_user_icon_counts(title, car, bike, pedestrian, save_path, textcolor='#000000', facecolor='#FFFFFF', iconpath='/home/user/Documents/TrafficCloud/trafficcloud/plotting'):
+def road_user_icon_counts(title, car, bike, pedestrian, save_path, textcolor='#000000', facecolor='#FFFFFF', iconpath=None):
     """
     car, bike, pedestrian: str or int, the desired data to display under these different road users
 
@@ -434,6 +445,10 @@ def road_user_icon_counts(title, car, bike, pedestrian, save_path, textcolor='#0
     ped_loc = 0.85
     icon_y = 0.6
     text_y = 0.4
+
+    if iconpath is None:
+        # assumes that the icon image files are in the same directory as this file
+        iconpath = os.path.dirname(os.path.abspath(__file__))
 
     # car icon
     fn = os.path.join(iconpath, 'car.png')
