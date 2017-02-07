@@ -17,8 +17,8 @@ class Status(object):
         IN_PROGRESS = 1
         COMPLETE = 2
 
-    @staticmethod
-    def create_status_dict():
+    @classmethod
+    def create_status_dict(cls):
         return {
             Status.StatusType.UPLOAD_HOMOGRAPHY: 0,
             Status.StatusType.CONFIGURATION_TEST: 0,

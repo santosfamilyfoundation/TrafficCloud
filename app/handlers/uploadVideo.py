@@ -5,13 +5,14 @@ from tornado.web import stream_request_body
 from tornado.httputil import parse_multipart_form_data
 from traffic_cloud_utils.pm import create_project
 from traffic_cloud_utils.app_config import get_project_path
+from baseHandler import BaseHandler
 
 from uuid import uuid4
 import os
 
 
 @stream_request_body
-class UploadVideoHandler(tornado.web.RequestHandler):
+class UploadVideoHandler(BaseHandler):
     """
     @api {post} /uploadVideo/ Upload Video
     @apiName UploadVideo
@@ -19,7 +20,7 @@ class UploadVideoHandler(tornado.web.RequestHandler):
     @apiGroup Upload
     @apiDescription This route will upload a video to a project (and create a new project if an old one is not specified)
 
-    
+
     @apiParam {File} video The video file to analyze. This can have any file extension.
     @apiParam {String} [identifier] The identifier of the project to update the video of. If no identifier is provided, a new project will be created, and the identifier will be returned in the response.
 
@@ -28,6 +29,9 @@ class UploadVideoHandler(tornado.web.RequestHandler):
     @apiError error_message The error message to display.
     """
     def initialize(self):
+        # Make sure the BaseHandler is initialized
+        super(UploadVideoHandler, self).initialize()
+
         self.file_name  = str(uuid4().int)
         self.file_path = os.path.realpath(os.path.join(os.path.dirname(__file__),'..','..','.temp',self.file_name))
         print 'Upload Video Initialized @{}'.format(self.file_path)
@@ -45,14 +49,14 @@ class UploadVideoHandler(tornado.web.RequestHandler):
                 content = f.read()
                 parse_multipart_form_data(boundary,content,arguments,files)
             except MemoryError as err:
-                raise tornado.web.HTTPError(reason = 'Memory Error: File too large',\
-                        status_code = 507)
+                self.error_message = 'Memory Error: File too large'
+                raise tornado.web.HTTPError(status_code = 507)
         if 'identifier' in arguments:
             identifier = arguments['identifier']
         else:
             identifier = str(uuid4())
         video = files['video'][0]
-        create_project(identifier, video) 
+        create_project(identifier, video)
 
         #TO-DO: Error checking for correct arguments
         self.write({'identifier': identifier})

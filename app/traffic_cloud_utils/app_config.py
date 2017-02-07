@@ -135,7 +135,7 @@ def update_config_without_sections(config_path, update_dict):
                 wf.write(line)
         for unused_key in unused_keys:
             wf.write("{} = {}\n".format(unused_key, update_dict[unused_key]))
-            
+
 
 def get_config_without_sections(config_path):
     """helper function to get params and their values of cfg files that look like run_tracking.cfg

@@ -14,6 +14,10 @@ class EmailHelper(object):
             print("WARNING: No email provided, failed to email user.")
             return
 
+        if to_addr == None or to_addr == '':
+            print("No email to send to")
+            return
+
         text = "From: Traffic Cloud <"+email+">\nTo: "+to_addr+"\nSubject: "+subject+"\n"+message
         server = smtplib.SMTP('smtp.gmail.com:587')
         server.starttls()

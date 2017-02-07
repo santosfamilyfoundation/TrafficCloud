@@ -8,8 +8,9 @@ from traffic_cloud_utils.statusHelper import StatusHelper
 import numpy as np
 import cv2
 from ast import literal_eval
+from baseHandler import BaseHandler
 
-class UploadHomographyHandler(tornado.web.RequestHandler):
+class UploadHomographyHandler(BaseHandler):
     """
     @api {post} /uploadHomography/ Upload Homography
     @apiName UploadHomography
@@ -29,6 +30,9 @@ class UploadHomographyHandler(tornado.web.RequestHandler):
     @apiError error_message The error message to display.
     """
     def initialize(self):
+        # Make sure the BaseHandler is initialized
+        super(UploadHomographyHandler, self).initialize()
+
         self.identifier = None
         self.files = {}
 
@@ -40,7 +44,7 @@ class UploadHomographyHandler(tornado.web.RequestHandler):
         self.write_homography_files()
         StatusHelper.set_status(self.identifier, "upload_homography", 2)
         self.finish("Upload Homography")
-        
+
     def write_homography_files(self):
         project_dir = get_project_path(self.identifier)
         aerial_pts = self.get_body_argument('aerial_pts')
@@ -54,7 +58,7 @@ class UploadHomographyHandler(tornado.web.RequestHandler):
             if (key == 'aerial' or key == 'camera'):
                 with open(os.path.join(project_dir,'homography',value[0]['filename']), 'wb') as f:
                     f.write(value[0]['body'])
-        
-        
+
+
 
 

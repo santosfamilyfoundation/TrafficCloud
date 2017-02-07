@@ -14,7 +14,7 @@ def create_tracking_video(project_path, video_path):
     num_frames_per_vid = 60
     num_frames = get_number_of_frames(video_path)
 
-    # Make the videos folder if it doesn't exists 
+    # Make the videos folder if it doesn't exists
     if not os.path.exists(videos_folder):
         os.makedirs(videos_folder)
 
@@ -34,7 +34,7 @@ def create_highlight_video(project_path, video_path, list_of_near_misses):
 
     upper_frame_limit = get_number_of_frames(video_path)
 
-    # Make the videos folder if it doesn't exists 
+    # Make the videos folder if it doesn't exists
     if not os.path.exists(videos_folder):
         os.makedirs(videos_folder)
 
@@ -42,7 +42,7 @@ def create_highlight_video(project_path, video_path, list_of_near_misses):
 
     for i, near_miss in enumerate(list_of_near_misses):
         start_frame, end_frame, object_id1, object_id2 = near_miss
-        
+
         # Create a short video snippet of the near miss interaction
         snippet_number = 2*i + 1
         pts_multiplier = 3.0 # > 1.0 = slower ; < 1.0 = faster than
@@ -52,13 +52,13 @@ def create_highlight_video(project_path, video_path, list_of_near_misses):
         # Get resolution of video
         snippet_path = os.path.join(videos_folder, temp_video_prefix + str(snippet_number) + ".mpg")
         width, height = get_resolution(snippet_path)
-        
+
         # create title slide image
         slide_number = 2*i
         slide_name = temp_video_prefix + str(slide_number)
         slide_path = os.path.join(videos_folder, slide_name+'.png')
         create_title_slide(width, height, slide_path, object_id1, object_id2)
-        
+
         # create title slide video
         create_video_from_image(videos_folder, slide_name+'.png', slide_name+'.mpg', 5)
 
@@ -109,18 +109,18 @@ def get_number_of_frames(videopath):
     num = int(subprocess.check_output(["ffprobe",
         "-v", "error",
         "-count_frames",
-        "-select_streams", "v:0", 
-        "-show_entries", "stream=nb_read_frames", 
-        "-of", "default=nokey=1:noprint_wrappers=1", 
+        "-select_streams", "v:0",
+        "-show_entries", "stream=nb_read_frames",
+        "-of", "default=nokey=1:noprint_wrappers=1",
         videopath]))
     return num
 
 def get_framerate(videopath):
     list_o = str(subprocess.check_output(["ffprobe",
-        "-v", "error", 
-        "-select_streams", "v:0", 
-        "-show_entries", "stream=avg_frame_rate", 
-        "-of", "default=noprint_wrappers=1:nokey=1", 
+        "-v", "error",
+        "-select_streams", "v:0",
+        "-show_entries", "stream=avg_frame_rate",
+        "-of", "default=noprint_wrappers=1:nokey=1",
         videopath]))
     return str(int(list_o.strip().split('/')[0])/float(list_o.strip().split('/')[1]))
 
@@ -137,12 +137,21 @@ def get_resolution(videopath):
 
 #### Video Creation
 
+def create_video_from_images(images_dir, prefix, video_dir, video_filename, framerate, extension="png"):
+    '''
+    Creates a video for images that are of the form prefix+number+.extension
+    '''
+    move_files_to_folder(images_dir,video_dir,prefix, extension)
+    renumber_frames(video_dir, 0, prefix, extension)
+    convert_frames_to_video(framerate, video_dir, video_dir, prefix, video_filename, 1.0)
+    delete_files(video_dir, prefix=prefix, extensions=[extension])
+
 def create_video_snippet(project_path, video_path, videos_folder, file_prefix, video_number, start_frame, end_frame, pts_multiplier=1.0):
     images_folder = os.path.join(project_path, "temp_images")
     db_path = os.path.join(project_path, "run", "results.sqlite")
     temp_image_prefix = "image-"
 
-    # Make the images folder if it doesn't exists 
+    # Make the images folder if it doesn't exists
     if not os.path.exists(images_folder):
         os.makedirs(images_folder)
 
@@ -153,15 +162,15 @@ def create_video_snippet(project_path, video_path, videos_folder, file_prefix, v
 
     # Get the frames, and create a short video out of them
     renumber_frames(images_folder, start_frame, temp_image_prefix, "png")
-    convert_frames_to_video(video_path, images_folder, videos_folder, temp_image_prefix, file_prefix + str(video_number) + ".mpg", pts_multiplier)
+    convert_frames_to_video(get_framerate(video_path), images_folder, videos_folder, temp_image_prefix, file_prefix + str(video_number) + ".mpg", pts_multiplier)
 
 def create_video_from_image(folder, image_filename, video_filename, duration):
-    subprocess.call(["ffmpeg", 
-        "-loop", "1", 
-        "-i", os.path.join(folder, image_filename), 
+    subprocess.call(["ffmpeg",
+        "-loop", "1",
+        "-i", os.path.join(folder, image_filename),
         "-c:v", "libx264",
         "-t", str(duration),
-        "-pix_fmt", "yuv420p", 
+        "-pix_fmt", "yuv420p",
         os.path.join(folder, video_filename)])
 
 def combine_videos(videos_folder, temp_video_prefix, filename):
@@ -170,11 +179,11 @@ def combine_videos(videos_folder, temp_video_prefix, filename):
 
     # Using Popen seems to be necessary in order to pipe the output of one into the other
     p1 = subprocess.Popen(['cat']+get_list_of_files(videos_folder, temp_video_prefix, "mpg"), stdout=subprocess.PIPE)
-    p2 = subprocess.Popen(['ffmpeg', 
-        '-f', 'mpeg', 
-        '-i', '-', 
-        '-qscale', '0', 
-        '-vcodec', 'mpeg4', 
+    p2 = subprocess.Popen(['ffmpeg',
+        '-f', 'mpeg',
+        '-i', '-',
+        '-qscale', '0',
+        '-vcodec', 'mpeg4',
         os.path.join(videos_folder, filename)], stdin=p1.stdout, stdout=subprocess.PIPE)
 
     p1.stdout.close()  # Allow p1 to receive a SIGPIPE if p2 exits.
@@ -184,7 +193,7 @@ def combine_videos(videos_folder, temp_video_prefix, filename):
 
 def renumber_frames(folder, start_frame, prefix, extension):
     temp_folder = os.path.join(folder, "temp")
-    # Make the temp folder if it doesn't exists 
+    # Make the temp folder if it doesn't exists
     if not os.path.exists(temp_folder):
         os.makedirs(temp_folder)
 
@@ -212,20 +221,20 @@ def renumber_frames(folder, start_frame, prefix, extension):
 
     os.removedirs(temp_folder)
 
-def convert_frames_to_video(video_path, images_folder, videos_folder, images_prefix, filename, pts_multiplier):
-    subprocess.call(["ffmpeg", 
-        "-framerate", get_framerate(video_path), 
+def convert_frames_to_video(framerate, images_folder, videos_folder, images_prefix, filename, pts_multiplier):
+    subprocess.call(["ffmpeg",
+        "-framerate", framerate,
         "-i", os.path.join(images_folder, images_prefix+"%d.png"),
         "-filter:v", "setpts={:0.1f}*PTS".format(pts_multiplier),
-        "-c:v", "libx264", 
-        "-pix_fmt", "yuv420p", 
+        "-c:v", "libx264",
+        "-pix_fmt", "yuv420p",
         os.path.join(videos_folder, filename)])
 
 def create_title_slide(width, height, save_path, object_id1, object_id2, fontsize=None, textcolor='#FFFFFF', facecolor='#000000'):
     """
     width: int, width in pixels of desired output
     height: int, pixel height of desired output
-    
+
     Note: fontsize varies with the resolution of the video in a very dumb manner right now.
     If you want to control fontsize, provide it as a parameter
     """

@@ -3,9 +3,10 @@
 import tornado.web
 import os
 import uuid
+from baseHandler import BaseHandler
 
-class UploadHandler(tornado.web.RequestHandler):
-    
+class UploadHandler(BaseHandler):
+
     @staticmethod
     def parse_request(files):
         name_body_dict = {}

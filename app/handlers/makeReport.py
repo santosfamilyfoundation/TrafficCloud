@@ -5,9 +5,9 @@ import tornado.web
 from traffic_cloud_utils.pdf_generate import makePdf
 from traffic_cloud_utils.app_config import get_project_path
 
-import baseHandler
+from baseHandler import BaseHandler
 
-class MakeReportHandler(baseHandler.BaseHandler):
+class MakeReportHandler(BaseHandler):
     """
     @api {post} /makeReport/ Make Report
     @apiName MakeReport
@@ -27,7 +27,8 @@ class MakeReportHandler(baseHandler.BaseHandler):
         if status_code == 200:
             self.finish("Make PDF Report")
         else:
-            raise tornado.web.HTTPError(reason=reason, status_code=status_code)
+            self.error_message = reason
+            raise tornado.web.HTTPError(status_code=status_code)
 
     @staticmethod
     def handler(identifier):
@@ -40,7 +41,7 @@ class MakeReportHandler(baseHandler.BaseHandler):
             os.mkdir(final_images)
 
         report_path = os.path.join(project_dir, 'santosreport.pdf')
-        
+
         # Hardcoded image file name order, so that the ordering of visuals in the report is consistent
         image_fns = [
             os.path.join(final_images, 'road_user_icon_counts.png'),

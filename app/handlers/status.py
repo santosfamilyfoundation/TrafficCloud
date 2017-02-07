@@ -2,8 +2,9 @@
 
 import tornado.web
 from traffic_cloud_utils.statusHelper import StatusHelper
+from baseHandler import BaseHandler
 
-class StatusHandler(tornado.web.RequestHandler):
+class StatusHandler(BaseHandler):
 
     """
     @api {post} /status/ Processing Status

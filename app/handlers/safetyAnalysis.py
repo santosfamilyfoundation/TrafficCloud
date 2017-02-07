@@ -1,15 +1,17 @@
  #!/usr/bin/env python
 import os
 import subprocess
-
+import threading
 import tornado.web
+
+from baseHandler import BaseHandler
 
 from traffic_cloud_utils.app_config import get_project_path, get_project_video_path, update_config_without_sections, get_config_without_sections
 from traffic_cloud_utils.emailHelper import EmailHelper
 from traffic_cloud_utils.statusHelper import StatusHelper
 
 
-class SafetyAnalysisHandler(tornado.web.RequestHandler):
+class SafetyAnalysisHandler(BaseHandler):
     """
     @api {post} /safetyAnalysis/ Safety Analysis
     @apiName SafetyAnalysis
@@ -25,51 +27,77 @@ class SafetyAnalysisHandler(tornado.web.RequestHandler):
     @apiError error_message The error message to display. (Will return unique error message if object tracking has NOT been run on specified project)
     """
     def post(self):
-        status_code, reason = self.handler(self.get_body_argument("identifier"))
-        email = self.get_body_argument("email", default = None) 
+        identifier = self.get_body_argument("identifier")
+        email = self.get_body_argument("email", default = None)
+        status_code, reason = SafetyAnalysisHandler.handler(identifier, email, SafetyAnalysisHandler.callback)
 
         if status_code == 200:
-            if not email == None:
-                subject = "Your video has finished processing."
-                message = "Hello,\n\tWe have finished looking through your data and identifying any dangerous interactions.\nThank you for your patience,\nThe Santos Team"
 
-                EmailHelper.send_email(email, subject, message)
             self.finish("Safety Analysis")
         else:
-            raise tornado.web.HTTPError(reason=reason, status_code=status_code)
+            self.error_message = reason
+            raise tornado.web.HTTPError(status_code=status_code)
+
+    @staticmethod
+    def callback(status_code, response_message, identifier, email):
+        if status_code == 200:
+            subject = "Your video has finished processing."
+            message = "Hello,\n\tWe have finished looking through your data and identifying any dangerous interactions.\nThank you for your patience,\nThe Santos Team"
+
+            EmailHelper.send_email(email, subject, message)
+
+        print(status_code, response_message)
 
 
     @staticmethod
-    def handler(identifier, prediction_method=None):
+    def handler(identifier, email, callback, prediction_method=None):
         StatusHelper.set_status(identifier, "safety_analysis", 1)
+
         project_path = get_project_path(identifier)
         if not os.path.exists(project_path):
             StatusHelper.set_status(identifier, "safety_analysis", -1)
             return (500, 'Project directory does not exist. Check your identifier?')
 
+        SafetyAnalysisThread(identifier, email, callback, prediction_method=prediction_method).start()
+
+        return (200, "Success")
+
+
+class SafetyAnalysisThread(threading.Thread):
+    def __init__(self, identifier, email, callback, prediction_method=None):
+        threading.Thread.__init__(self)
+        self.identifier = identifier
+        self.callback = callback
+        self.email = email
+        self.prediction_method = prediction_method
+
+    def run(self):
+        StatusHelper.set_status(self.identifier, "safety_analysis", 1)
+
+        project_path = get_project_path(self.identifier)
         config_path = os.path.join(project_path, "tracking.cfg")
         db_path = os.path.join(project_path, "run", "results.sqlite")
         update_dict = {
-            'video-filename': get_project_video_path(identifier), # use absolute path to video on server
+            'video-filename': get_project_video_path(self.identifier), # use absolute path to video on server
             'database-filename': db_path # use absolute path to database
         }
-        
+
         update_config_without_sections(config_path, update_dict)
 
-        if prediction_method is None:
-            prediction_method = 'cv' # default to the least resource intensive method
+        if self.prediction_method is None:
+            self.prediction_method = 'cv' # default to the least resource intensive method
 
         # Predict Interactions between road users and compute safety metrics describing them
         try:
             print "Running safety analysis. Please wait as this may take a while."
 
-            subprocess.check_output(["safety-analysis.py", "--cfg", config_path, "--prediction-method", prediction_method])
-        except subprocess.CalledProgramError as err_msg:
-            StatusHelper.set_status(identifier, "safety_analysis", -1)
-            return (500, err_msg.output)
+            subprocess.check_output(["safety-analysis.py", "--cfg", config_path, "--prediction-method", self.prediction_method])
+        except subprocess.CalledProcessError as err_msg:
+            StatusHelper.set_status(self.identifier, "safety_analysis", -1)
+            return self.callback(500, err_msg.output, self.identifier, self.email)
 
-        StatusHelper.set_status(identifier, "safety_analysis", 2)
-        return (200, "Success")
+        StatusHelper.set_status(self.identifier, "safety_analysis", 2)
+        return self.callback(200, "Success", self.identifier, self.email)
 
 
 

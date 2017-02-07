@@ -6,10 +6,10 @@ import tornado.escape
 
 from traffic_cloud_utils.plotting.visualization import road_user_counts, road_user_icon_counts
 from traffic_cloud_utils.app_config import get_project_path
-import baseHandler
+from baseHandler import BaseHandler
 
 #TODO(rlouie): replace with SantosBaseHandler class pip makes
-class RoadUserCountsHandler(baseHandler.BaseHandler):
+class RoadUserCountsHandler(BaseHandler):
     """
     @api {post} /roadUserCounts/ Road User Counts
     @apiName RoadUserCounts
@@ -31,7 +31,8 @@ class RoadUserCountsHandler(baseHandler.BaseHandler):
         if status_code == 200:
             self.finish("Visualize Road User Counts")
         else:
-            raise tornado.web.HTTPError(reason=reason, status_code=status_code)
+            self.error_message = reason
+            raise tornado.web.HTTPError(status_code=status_code)
 
     @staticmethod
     def handler(identifier):
@@ -47,7 +48,7 @@ class RoadUserCountsHandler(baseHandler.BaseHandler):
         if not os.path.exists(final_images):
             os.mkdir(final_images)
 
-        try:        
+        try:
             counts = road_user_counts(db)
         except Exception as err_msg:
             return (500, err_msg)

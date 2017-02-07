@@ -33,7 +33,7 @@ def update_homography(identifier, homography_path, unitpixelratio):
 
 def update_project_config(identifier, config_dict):
     _update_config_dict_with_defaults(config_dict)
-    _translate_config_dict(config_dict) 
+    _translate_config_dict(config_dict)
 
     project_path = get_project_path(identifier)
     tracking_path = os.path.join(project_path, "tracking.cfg")
@@ -49,6 +49,7 @@ def default_config_dict():
         'max_connection_distance': 1.0,
         'max_segmentation_distance': 0.7,
     }
+
 def _translate_config_dict(config_dict):
     translate_dict = \
     {   'max_features_per_frame': "max-nfeatures",
@@ -63,7 +64,7 @@ def _translate_config_dict(config_dict):
         if key in translate_dict:
             config_dict[translate_dict[key]] = val
             del config_dict[key]
-        
+
 def _update_config_dict_with_defaults(config_dict):
     default_dict = default_config_dict()
 
@@ -115,7 +116,7 @@ def _create_project_dir(identifier, config_dict, video_dict):
         update_config_without_sections(tracking_path,update_dict)
     else:
         print("Project exists. No new project created.")
-                
+
 def _write_to_project_config(identifier, video_filename, unitpixelratio='0.05'):
     ts = time.time()
     vid_ts = datetime.datetime.now()

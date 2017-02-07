@@ -2,7 +2,7 @@
 
 import os
 import tornado.web
-import baseHandler
+from baseHandler import BaseHandler
 from traffic_cloud_utils.app_config import get_project_path, get_project_video_path
 from traffic_cloud_utils.video import get_framerate
 from traffic_cloud_utils.plotting.visualization import vel_cdf
@@ -10,7 +10,7 @@ from traffic_cloud_utils.plotting.visualization import vel_cdf
 import json
 import traceback
 
-class CreateSpeedCDFHandler(baseHandler.BaseHandler):
+class CreateSpeedCDFHandler(BaseHandler):
     """
     @api {post} /speedCDF/ Speed CDF
     @apiName SpeedCDF
@@ -52,7 +52,7 @@ class CreateSpeedCDFHandler(baseHandler.BaseHandler):
 
         video_path = get_project_video_path(identifier)
         if not os.path.exists(video_path):
-            return (500, 'Source video file does not exist.  Was the video uploaded?')        
+            return (500, 'Source video file does not exist.  Was the video uploaded?')
 
         vel_cdf(db, float(get_framerate(video_path)), speed_limit, final_images, vehicle_only)
 

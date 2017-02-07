@@ -9,8 +9,9 @@ from traffic_cloud_utils.app_config import get_project_path, get_project_video_p
 from traffic_cloud_utils.emailHelper import EmailHelper
 from objectTracking import ObjectTrackingHandler
 from safetyAnalysis import SafetyAnalysisHandler
+from baseHandler import BaseHandler
 
-class AnalysisHandler(tornado.web.RequestHandler):
+class AnalysisHandler(BaseHandler):
     """
     @api {post} /analysis/ Analysis
     @apiName Analysis
@@ -27,18 +28,44 @@ class AnalysisHandler(tornado.web.RequestHandler):
     """
     def post(self):
         identifier = self.get_body_argument("identifier")
+
         email = self.get_body_argument("email", default = None)
-        status_code, reason = ObjectTrackingHandler.handler(identifier, email)
-        if status_code == 200:
-            status_code, reason = SafetyAnalysisHandler.handler(identifier, email)
+        status_code, reason = AnalysisHandler.handler(identifier, email)
 
         if status_code == 200:
-            if not email == None:
-                message = "Hello,\n\tWe have finished processing your video and identifying any dangerous interactions.\nThank you for your patience,\nThe Santos Team"
-                subject = "Your video has finished processing."
-
-                EmailHelper.send_email(email, subject, message)
             self.finish("Analysis")
         else:
-            raise tornado.web.HTTPError(reason=reason, status_code=status_code)
-        
+            self.error_message = reason
+            raise tornado.web.HTTPError(status_code=status_code)
+
+    @staticmethod
+    def handler(identifier, email):
+        project_path = get_project_path(identifier)
+        if not os.path.exists(project_path):
+           return (500, 'Project directory does not exist. Check your identifier?')
+
+        status_code, reason = ObjectTrackingHandler.handler(identifier, email, AnalysisHandler.object_tracking_callback)
+        return (status_code, reason)
+
+    @staticmethod
+    def object_tracking_callback(status_code, response_message, identifier, email):
+        if status_code == 200:
+            message = "Hello,\n\tWe have finished processing your video and identifying all objects.\nWe will perform safety analysis now.\nThank you for your patience,\nThe Santos Team"
+            subject = "Your video has finished processing."
+
+            EmailHelper.send_email(email, subject, message)
+
+            status_code, reason = SafetyAnalysisHandler.handler(identifier, email, AnalysisHandler.safety_analysis_callback)
+
+        print (status_code, response_message)
+
+    @staticmethod
+    def safety_analysis_callback(status_code, response_message, identifier, email):
+        if status_code == 200:
+            subject = "Your video has finished processing."
+            message = "Hello,\n\tWe have finished looking through your data and identifying any dangerous interactions.\nThank you for your patience,\nThe Santos Team"
+
+            EmailHelper.send_email(email, subject, message)
+
+        print(status_code, response_message)
+
