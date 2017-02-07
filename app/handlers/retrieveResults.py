@@ -26,23 +26,26 @@ class RetrieveResultsHandler(tornado.web.RequestHandler):
         self.identifier = self.get_body_arguments("identifier")
 
     def get(self):
-        # identifier = self.get_body_arguments("identifier")
-        project_path = get_project_path(self.identifier)
+        identifier = self.get_body_arguments("identifier")
+        project_path = get_project_path(identifier[0])
         file_name = os.path.join(project_path, 'final_videos', 'highlight.mp4')
 
-        zipf = zipfile.ZipFile('results.mp4', 'w', zipfile.ZIP_DEFLATED)
-        # TODO only handles highlight video right now, need to add results report wherever it is
+        # TODO this does not complete before it tries to send it
+        zipf = zipfile.ZipFile('results.zip', 'w', zipfile.ZIP_DEFLATED)
         for root, dirs, files in os.walk(file_name):
             for file in files:
                 zipf.write(os.path.join(root, file))
         zipf.close()
-        # TODO catch if zip not created
         results_path = os.path.join(project_path, 'results.zip')
 
         self.set_header('Content-Type', 'application/octet-stream')
         self.set_header('Content-Description', 'File Transfer')
-        self.set_header('Content-Disposition', 'attachment; filename=' + results_path)
-        with open(results_path, 'rb') as f:
+        # TODO temporary
+        # self.set_header('Content-Disposition', 'attachment; filename=' + results_path)
+        self.set_header('Content-Disposition', 'attachment; filename=' + file_name)
+        # TODO temporary
+        # with open(results_path, 'rb') as f:
+        with open(file_name, 'rb') as f:
             try:
                 while True:
                     data = f.read(2048)
