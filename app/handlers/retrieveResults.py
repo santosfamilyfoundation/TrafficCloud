@@ -36,15 +36,10 @@ class RetrieveResultsHandler(tornado.web.RequestHandler):
             for file in files:
                 zipf.write(os.path.join(file_path, file))
         zipf.close()
-        # results_path = os.path.join(project_path, 'results.zip')
 
         self.set_header('Content-Type', 'application/octet-stream')
         self.set_header('Content-Description', 'File Transfer')
-        # TODO temporary
-        # self.set_header('Content-Disposition', 'attachment; filename=' + results_path)
         self.set_header('Content-Disposition', 'attachment; filename=' + file_name)
-        # TODO temporary
-        # with open(results_path, 'rb') as f:
         with open(file_name, 'rb') as f:
             try:
                 while True:
