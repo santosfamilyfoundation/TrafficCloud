@@ -28,13 +28,14 @@ class RetrieveResultsHandler(tornado.web.RequestHandler):
     def get(self):
         identifier = self.get_body_arguments("identifier")
         project_path = get_project_path(identifier[0])
-        file_name = os.path.join(project_path, 'final_videos', 'highlight.mp4')
+        file_path = os.path.join(project_path, 'final_videos')
+        file_name = os.path.join(project_path, 'final_videos', 'results.zip')
 
         # TODO this does not complete before it tries to send it
-        zipf = zipfile.ZipFile('results.zip', 'w', zipfile.ZIP_DEFLATED)
-        for root, dirs, files in os.walk(file_name):
+        zipf = zipfile.ZipFile(file_name, 'w', zipfile.ZIP_DEFLATED)
+        for root, dirs, files in os.walk(file_path):
             for file in files:
-                zipf.write(os.path.join(root, file))
+                zipf.write(os.path.join(file_path, file))
         zipf.close()
         results_path = os.path.join(project_path, 'results.zip')
 
