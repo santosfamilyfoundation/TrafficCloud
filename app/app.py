@@ -8,6 +8,8 @@ import tornado.ioloop
 import tornado.options
 import tornado.web
 import os
+import matplotlib
+matplotlib.use('Agg')
 
 from tornado.options import define, options
 

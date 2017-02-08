@@ -84,12 +84,19 @@ def delete_files(folder, prefix="", extensions=[], excluded_files=[]):
         for file in os.listdir(folder):
             if file.startswith(prefix):
                 s = file.split('.')
-                if len(s) == 2:
+                has_extension = len(s) == 2
+                extension_included = True
+
+                # If it has an extension, don't delete it if it doesn't have an extension provided
+                if has_extension:
                     e = s[1]
-                    # Then check extension is correct
-                    if len(extensions) == 0 or e in extensions:
-                        if not file in excluded_files:
-                            os.remove(os.path.join(folder, file))
+                    if len(extensions) > 0 and e not in extensions:
+                        extension_included = False
+
+                # If it has an extension that should be deleted (or extensions don't exist), and not in excluded files, delete it
+                if extension_included:
+                    if not file in excluded_files:
+                        os.remove(os.path.join(folder, file))
 
 def get_list_of_files(folder, prefix, extension):
     count = 0
@@ -141,10 +148,10 @@ def create_video_from_images(images_dir, prefix, video_dir, video_filename, fram
     '''
     Creates a video for images that are of the form prefix+number+.extension
     '''
-    move_files_to_folder(images_dir,video_dir,prefix, extension)
-    renumber_frames(video_dir, 0, prefix, extension)
-    convert_frames_to_video(framerate, video_dir, video_dir, prefix, video_filename, 1.0)
-    delete_files(video_dir, prefix=prefix, extensions=[extension])
+    if not os.path.exists(video_dir):
+        os.mkdir(video_dir)
+    renumber_frames(images_dir, 0, prefix, extension)
+    convert_frames_to_video(framerate, images_dir, video_dir, prefix, video_filename, 1.0)
 
 def create_video_snippet(project_path, video_path, videos_folder, file_prefix, video_number, start_frame, end_frame, pts_multiplier=1.0):
     images_folder = os.path.join(project_path, "temp_images")
@@ -157,8 +164,7 @@ def create_video_snippet(project_path, video_path, videos_folder, file_prefix, v
 
     # Delete old images, and recreate them in the right place
     delete_files(images_folder, temp_image_prefix, ["png"], excluded_files=[tracking_filename, highlight_filename])
-    subprocess.call(["display-trajectories.py", "-i", video_path,"-d", db_path, "-o", os.path.join(project_path, "homography", "homography.txt"), "-t", "object", "--save-images", "-f", str(start_frame), "--last-frame", str(end_frame)])
-    move_files_to_folder(os.getcwd(), images_folder, temp_image_prefix, ["png"])
+    subprocess.call(["display-trajectories.py", "-i", video_path,"-d", db_path, "-o", os.path.join(project_path, "homography", "homography.txt"), "-t", "object", "--save-images", "-f", str(start_frame), "--last-frame", str(end_frame), "--output-directory", images_folder])
 
     # Get the frames, and create a short video out of them
     renumber_frames(images_folder, start_frame, temp_image_prefix, "png")
@@ -211,7 +217,7 @@ def renumber_frames(folder, start_frame, prefix, extension):
                     except:
                         print("Couldn't parse to int: "+file+" from prefix: "+prefix)
                     if num < 0:
-                        raise Error()
+                        raise Exception()
                     new_file = prefix+str(num)+'.'+extension
                     os.rename(os.path.join(folder, file), os.path.join(temp_folder, new_file))
 

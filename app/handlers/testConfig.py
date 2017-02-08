@@ -106,18 +106,23 @@ class TestConfigFeatureThread(threading.Thread):
 
         images_folder = os.path.join(get_project_path(self.identifier), "feature_images")
         video.delete_files(images_folder)
+        if not os.path.exists(images_folder):
+            os.mkdir(images_folder)
 
         try:
             subprocess.check_output(["feature-based-tracking", tracking_path, "--tf", "--database-filename", db_path])
-            subprocess.check_output(["display-trajectories.py", "-i", get_project_video_path(self.identifier), "-d", db_path, "-o", project_path + "/homography/homography.txt", "-t", "feature", "--save-images", "-f", str(self.frame_start), "--last-frame", str(self.frame_start + self.num_frames)])
+            subprocess.check_output(["display-trajectories.py", "-i", get_project_video_path(self.identifier), "-d", db_path, "-o", project_path + "/homography/homography.txt", "-t", "feature", "--save-images", "-f", str(self.frame_start), "--last-frame", str(self.frame_start + self.num_frames), "--output-directory", images_folder])
         except subprocess.CalledProcessError as err_msg:
             StatusHelper.set_status(self.identifier, "configuration_test", -1)
             return self.callback(500, err_msg.output, self.identifier)
 
-        videos_folder = os.path.join(get_project_path(self.identifier), "feature_images")
+        videos_folder = os.path.join(get_project_path(self.identifier), "feature_video")
         video_filename = "feature_video.mp4"
         temp_image_prefix = 'image-'
-        video.create_video_from_images(os.getcwd(), temp_image_prefix, videos_folder, video_filename, video.get_framerate(get_project_video_path(self.identifier)))
+        video.create_video_from_images(images_folder, temp_image_prefix, videos_folder, video_filename, video.get_framerate(get_project_video_path(self.identifier)))
+
+        video.delete_files(images_folder)
+        os.rmdir(images_folder)
 
         StatusHelper.set_status(self.identifier, "configuration_test", 2)
         return self.callback(200, "Test config done", self.identifier)
@@ -151,21 +156,27 @@ class TestConfigObjectThread(threading.Thread):
 
         images_folder = os.path.join(get_project_path(self.identifier), "object_images")
         video.delete_files(images_folder)
+        if not os.path.exists(images_folder):
+            os.mkdir(images_folder)
 
         try:
             subprocess.check_output(["feature-based-tracking",tracking_path,"--gf","--database-filename",obj_db_path])
             subprocess.check_output(["classify-objects.py", "--cfg", tracking_path, "-d", obj_db_path])  # Classify road users
-            subprocess.check_output(["display-trajectories.py", "-i", get_project_video_path(self.identifier),"-d", obj_db_path, "-o", project_path + "/homography/homography.txt", "-t", "object", "--save-images", "-f", str(self.frame_start), "--last-frame", str(self.frame_start + self.num_frames)])
+            subprocess.check_output(["display-trajectories.py", "-i", get_project_video_path(self.identifier),"-d", obj_db_path, "-o", project_path + "/homography/homography.txt", "-t", "object", "--save-images", "-f", str(self.frame_start), "--last-frame", str(self.frame_start + self.num_frames), "--output-directory", images_folder])
         except subprocess.CalledProcessError as err_msg:
             StatusHelper.set_status(self.identifier, "configuration_test", -1)
             return self.callback(500, err_msg.output, self.identifier)
 
-        videos_folder = os.path.join(get_project_path(self.identifier), "object_images")
+        videos_folder = os.path.join(get_project_path(self.identifier), "object_video")
         video_filename = "object_video.mp4"
         temp_image_prefix = 'image-'
-        video.create_video_from_images(os.getcwd(), temp_image_prefix, videos_folder, video_filename, video.get_framerate(get_project_video_path(self.identifier)))
+        video.create_video_from_images(images_folder, temp_image_prefix, videos_folder, video_filename, video.get_framerate(get_project_video_path(self.identifier)))
+
+        video.delete_files(images_folder)
+        os.rmdir(images_folder)
 
         StatusHelper.set_status(self.identifier, "configuration_test", 2)
         return self.callback(200, "Test config done", self.identifier)
+
 
 

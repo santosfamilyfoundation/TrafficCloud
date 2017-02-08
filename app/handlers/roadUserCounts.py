@@ -58,7 +58,7 @@ class RoadUserCountsHandler(BaseHandler):
                 car=counts['car'],
                 bike=counts['bicycle'],
                 pedestrian=counts['pedestrian'],
-                save_path=os.path.join(final_images, 'road_user_icon_counts.png'))
+                save_path=os.path.join(final_images, 'road_user_icon_counts.jpg'))
         except Exception as err_msg:
             return (500, err_msg)
 
