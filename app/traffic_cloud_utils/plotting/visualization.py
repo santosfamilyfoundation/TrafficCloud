@@ -341,7 +341,6 @@ def vel_cdf(filename, fps, speed_limit=25, dir=None, only_vehicle=True):
     cdf = Cdf(obj_vels)
     pr = cdf.PercentileRank(speed_limit)
 
-    thinkplot.PrePlot(2)
     titlestring = "{:0.1f} % of {} are exceeding the {} mph limit".format(
         100 - pr,
         'vehicles' if only_vehicle else 'road users',
@@ -478,6 +477,7 @@ def road_user_icon_counts(title, car, bike, pedestrian, save_path, textcolor='#0
     ax.text(ped_loc*mpl_width, text_y*mpl_height, str(pedestrian), horizontalalignment='center', fontsize=fontsize, color=textcolor)
 
     fig.savefig(save_path, dpi=dpi, bbox_inches=0, pad_inches=0, facecolor=facecolor, format='jpg')
+    plt.close()
 
 if __name__ == '__main__':
     import argparse
