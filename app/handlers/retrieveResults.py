@@ -23,19 +23,24 @@ class RetrieveResultsHandler(BaseHandler):
     @apiError error_message The error message to display.
     """
 
-    def post(self):
-        self.identifier = self.get_body_arguments("identifier")
-
     def get(self):
-        identifier = self.get_body_arguments("identifier")
+        chunk_size = 2048
+        identifier = self.get_body_arguments('identifier')
         project_path = get_project_path(identifier[0])
-        file_path = os.path.join(project_path, 'final_videos')
+        file_videos = os.path.join(project_path, 'final_videos')
+        file_images = os.path.join(project_path, 'final_images')
         file_name = os.path.join(project_path, 'results.zip')
+        dir_len = len(project_path)
 
         zipf = zipfile.ZipFile(file_name, 'w', zipfile.ZIP_DEFLATED)
-        for root, dirs, files in os.walk(file_path):
+        for root, dirs, files in os.walk(file_videos):
             for file in files:
-                zipf.write(os.path.join(file_path, file))
+                file_path = os.path.join(root, file)
+                zipf.write(file_path, file_path[dir_len :])
+        for root, dirs, files in os.walk(file_images):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zipf.write(file_path, file_path[dir_len :])
         zipf.close()
 
         self.set_header('Content-Type', 'application/octet-stream')
@@ -44,10 +49,11 @@ class RetrieveResultsHandler(BaseHandler):
         with open(file_name, 'rb') as f:
             try:
                 while True:
-                    data = f.read(2048)
+                    data = f.read(chunk_size)
                     if not data:
                         break
                     self.write(data)
                 self.finish()
             except Exception as e:
-                print e
+                self.error_message = e
+                raise tornado.web.HTTPError(status_code=500)
