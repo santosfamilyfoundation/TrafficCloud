@@ -29,9 +29,9 @@ class RetrieveResultsHandler(BaseHandler):
         file_videos = os.path.join(project_path, 'final_videos')
         file_images = os.path.join(project_path, 'final_images')
         file_report = os.path.join(project_path, 'santosreport.pdf')
-        file_name = os.path.join(project_path, 'results.zip')
+        self.file_name = os.path.join(project_path, 'results.zip')
 
-        zipf = zipfile.ZipFile(file_name, 'w', zipfile.ZIP_DEFLATED)
+        zipf = zipfile.ZipFile(self.file_name, 'w', zipfile.ZIP_DEFLATED)
         # Write videos
         for root, dirs, files in os.walk(file_videos):
             for file in files:
@@ -48,8 +48,8 @@ class RetrieveResultsHandler(BaseHandler):
 
         self.set_header('Content-Type', 'application/octet-stream')
         self.set_header('Content-Description', 'File Transfer')
-        self.set_header('Content-Disposition', 'attachment; filename=' + file_name)
-        with open(file_name, 'rb') as f:
+        self.set_header('Content-Disposition', 'attachment; filename=' + self.file_name)
+        with open(self.file_name, 'rb') as f:
             try:
                 while True:
                     data = f.read(chunk_size)
@@ -60,3 +60,6 @@ class RetrieveResultsHandler(BaseHandler):
             except Exception as e:
                 self.error_message = str(e)
                 raise tornado.web.HTTPError(status_code=500)
+
+    def on_finish(self):
+        os.remove(self.file_name)
