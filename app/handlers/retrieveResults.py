@@ -22,25 +22,28 @@ class RetrieveResultsHandler(BaseHandler):
 
     @apiError error_message The error message to display.
     """
-
     def get(self):
         chunk_size = 2048
         identifier = self.get_body_argument('identifier')
         project_path = get_project_path(identifier)
         file_videos = os.path.join(project_path, 'final_videos')
         file_images = os.path.join(project_path, 'final_images')
+        file_report = os.path.join(project_path, 'santosreport.pdf')
         file_name = os.path.join(project_path, 'results.zip')
-        dir_len = len(project_path)
 
         zipf = zipfile.ZipFile(file_name, 'w', zipfile.ZIP_DEFLATED)
+        # Write videos
         for root, dirs, files in os.walk(file_videos):
             for file in files:
                 file_path = os.path.join(root, file)
-                zipf.write(file_path, file_path[dir_len :])
+                zipf.write(file_path, file)
+        # Write images
         for root, dirs, files in os.walk(file_images):
             for file in files:
                 file_path = os.path.join(root, file)
-                zipf.write(file_path, file_path[dir_len :])
+                zipf.write(file_path, file)
+        # Write report
+        zipf.write(file_report, os.path.basename(file_report))
         zipf.close()
 
         self.set_header('Content-Type', 'application/octet-stream')
