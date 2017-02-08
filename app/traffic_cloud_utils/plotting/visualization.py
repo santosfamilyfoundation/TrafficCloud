@@ -350,7 +350,7 @@ def vel_cdf(filename, fps, speed_limit=25, dir=None, only_vehicle=True):
     thinkplot.Vlines(speed_limit, 0, 1)
     thinkplot.Config(title=titlestring, xlabel='Velocity (mph)', ylabel='CDF')
     if dir is not None:
-        thinkplot.Save(os.path.join(dir, 'velocityCDF'), formats=['png'], bbox_inches='tight')
+        thinkplot.Save(os.path.join(dir, 'velocityCDF'), formats=['jpg'], bbox_inches='tight')
     else:
         thinkplot.Show()
 
@@ -477,7 +477,7 @@ def road_user_icon_counts(title, car, bike, pedestrian, save_path, textcolor='#0
     # bike count
     ax.text(ped_loc*mpl_width, text_y*mpl_height, str(pedestrian), horizontalalignment='center', fontsize=fontsize, color=textcolor)
 
-    fig.savefig(save_path, dpi=dpi, bbox_inches=0, pad_inches=0, facecolor=facecolor)
+    fig.savefig(save_path, dpi=dpi, bbox_inches=0, pad_inches=0, facecolor=facecolor, format='jpg')
 
 if __name__ == '__main__':
     import argparse
