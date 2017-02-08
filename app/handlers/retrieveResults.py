@@ -25,8 +25,8 @@ class RetrieveResultsHandler(BaseHandler):
 
     def get(self):
         chunk_size = 2048
-        identifier = self.get_body_arguments('identifier')
-        project_path = get_project_path(identifier[0])
+        identifier = self.get_body_argument('identifier')
+        project_path = get_project_path(identifier)
         file_videos = os.path.join(project_path, 'final_videos')
         file_images = os.path.join(project_path, 'final_images')
         file_name = os.path.join(project_path, 'results.zip')
@@ -55,5 +55,5 @@ class RetrieveResultsHandler(BaseHandler):
                     self.write(data)
                 self.finish()
             except Exception as e:
-                self.error_message = e
+                self.error_message = str(e)
                 raise tornado.web.HTTPError(status_code=500)
