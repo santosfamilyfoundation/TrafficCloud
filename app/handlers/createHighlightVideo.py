@@ -5,7 +5,7 @@ import threading
 import tornado.web
 import tornado.escape
 
-from storage import alterInteractionsWithRoadUserType, getNearMissFrames
+from storage import getNearMissFrames
 
 from baseHandler import BaseHandler
 from traffic_cloud_utils.video import create_highlight_video, get_framerate
@@ -74,12 +74,6 @@ class CreateHighlightVideoHandler(BaseHandler):
         if not os.path.exists(video_path):
             StatusHelper.set_status(identifier, Status.Type.HIGHLIGHT_VIDEO, Status.Flag.FAILURE)
             return (500, 'Source video file does not exist.  Was the video uploaded?')
-
-        try:
-            alterInteractionsWithRoadUserType(db)
-        except Exception as error_message:
-            StatusHelper.set_status(identifier, Status.Type.HIGHLIGHT_VIDEO, Status.Flag.FAILURE)
-            return (500, "Alter Interactions Table with Road User Type failed\n" + str(error_message))
 
         ttc_threshold_frames = int(ttc_threshold * float(get_framerate(video_path)))
 
