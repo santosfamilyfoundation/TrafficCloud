@@ -175,6 +175,7 @@ def create_video_snippet(project_path, video_path, videos_folder, file_prefix, v
         "--save-images",
         "-f", str(start_frame),
         "--last-frame", str(end_frame),
+        "--output-directory", images_folder,
         ]
     if interacting_objects is not None:
         display_trajectories_call.extend(['--interacting-objects', str(interacting_objects[0]), str(interacting_objects[1])])
