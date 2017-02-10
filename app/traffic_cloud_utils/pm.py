@@ -93,7 +93,6 @@ def _create_project_dir(identifier, config_dict, video_dict):
         with open(os.path.join(project_path,video_dict['filename']), 'wb') as v:
             v.write(video_dict['body'])
 
-        # TODO: unitpixelratio
         _write_to_project_config(identifier, video_dict['filename'])
 
         default_files_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "default")
@@ -117,7 +116,7 @@ def _create_project_dir(identifier, config_dict, video_dict):
     else:
         print("Project exists. No new project created.")
 
-def _write_to_project_config(identifier, video_filename, unitpixelratio='0.05'):
+def _write_to_project_config(identifier, video_filename):
     ts = time.time()
     vid_ts = datetime.datetime.now()
     #This line needs to be updated to no longer need the ui class. Load video and pull time.
@@ -132,9 +131,6 @@ def _write_to_project_config(identifier, video_filename, unitpixelratio='0.05'):
     config_parser.set("video", "source", video_filename)
     config_parser.set("video", "framerate", get_framerate(os.path.join(get_project_path(identifier), video_filename)))
     config_parser.set("video", "start", video_timestamp)
-    if unitpixelratio:
-        config_parser.add_section("homography")
-        config_parser.set("homography", "unitpixelratio", unitpixelratio)
 
     with open(get_project_config_path(identifier), 'wb') as configfile:
         config_parser.write(configfile)
