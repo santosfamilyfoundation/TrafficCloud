@@ -14,7 +14,7 @@ class Status(object):
         COMPLETE = 2
 
     class Type(Enum):
-        UPLOAD_HOMOGRAPHY = "upload_homography"
+        CONFIG_HOMOGRAPHY = "config_homography"
         FEATURE_TEST = "feature_test"
         OBJECT_TEST = "object_test"
         OBJECT_TRACKING = "object_tracking"
@@ -25,7 +25,7 @@ class Status(object):
     @classmethod
     def create_status_dict(cls):
         return {
-            Status.Type.UPLOAD_HOMOGRAPHY: Status.Flag.INCOMPLETE,
+            Status.Type.CONFIG_HOMOGRAPHY: Status.Flag.INCOMPLETE,
             Status.Type.FEATURE_TEST: Status.Flag.INCOMPLETE,
             Status.Type.OBJECT_TEST: Status.Flag.INCOMPLETE,
             Status.Type.OBJECT_TRACKING: Status.Flag.INCOMPLETE,

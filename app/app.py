@@ -18,7 +18,7 @@ from tornado.options import define, options
 # Upload routes
 from handlers.upload import UploadHandler
 from handlers.uploadVideo import UploadVideoHandler
-from handlers.uploadHomography import UploadHomographyHandler
+from handlers.configHomography import ConfigHomographyHandler
 
 # Configure routes
 from handlers.config import ConfigHandler
@@ -50,7 +50,7 @@ class Application(tornado.web.Application):
             (r"/", MainHandler),
             (r"/upload", UploadHandler),
             (r"/uploadVideo", UploadVideoHandler),
-            (r"/uploadHomography", UploadHomographyHandler),
+            (r"/configHomography", ConfigHomographyHandler),
             (r"/config", ConfigHandler),
             (r"/testConfig", TestConfigHandler),
             (r"/defaultConfig", DefaultConfigHandler),
