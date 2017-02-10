@@ -25,3 +25,15 @@ class BaseHandler(tornado.web.RequestHandler):
 
         self.finish(json.dumps({
             'error': error_dict }))
+
+    def write_file_stream(self, file_name, chunk_size = 2048):
+        with open(file_name, 'rb') as f:
+            try:
+                while True:
+                    data = f.read(chunk_size)
+                    if not data:
+                        break
+                    self.write(data)
+            except Exception as e:
+                self.error_message = str(e)
+                raise tornado.web.HTTPError(status_code=500)
