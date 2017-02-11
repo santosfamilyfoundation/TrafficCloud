@@ -14,13 +14,13 @@ class ConfigHomographyHandler(BaseHandler):
     @api {post} /configHomography/ Config Homography
     @apiName ConfigHomography
     @apiVersion 0.2.0
-    @apiGroup Upload
+    @apiGroup Configuration
     @apiDescription Use this route to upload homography data for a project.
 
     @apiParam {String} identifier The identifier of the project for which to configure the homography.
     @apiParam {Integer} unit_pixel_ratio The unit_pixel_ratio of the images (ie. 0.05 meters per pixel).
-    @apiParam {JSON} aerial_pts A JSON array containing the coordinates of point clicks on the aerial image as arrays in the form [x_coord, y_coord]
-    @apiParam {JSON} camera_pts A JSON array containing the coordinates of point clicks on the camera image as arrays in the form [x_coord, y_coord]
+    @apiParam {JSON Array} aerial_pts A JSON array containing the coordinates of point clicks on the aerial image as arrays in the form [x_coord, y_coord]
+    @apiParam {JSON Array} camera_pts A JSON array containing the coordinates of point clicks on the camera image as arrays in the form [x_coord, y_coord]
 
     @apiSuccess status_code The API will return a status code of 200 upon success.
 
@@ -43,6 +43,7 @@ class ConfigHomographyHandler(BaseHandler):
 
     def write_homography_files(self):
         project_dir = get_project_path(self.identifier)
+        #TODO: Put literal_eval here and use try/catch
         aerial_pts = self.get_body_argument('aerial_pts')
         camera_pts = self.get_body_argument('camera_pts')
 
