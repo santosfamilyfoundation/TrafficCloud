@@ -7,6 +7,7 @@ import tornado.web
 
 from traffic_cloud_utils.app_config import get_project_path, get_project_video_path, update_config_without_sections, get_config_without_sections
 from traffic_cloud_utils.emailHelper import EmailHelper
+from traffic_cloud_utils.statusHelper import StatusHelper, Status
 from objectTracking import ObjectTrackingHandler
 from safetyAnalysis import SafetyAnalysisHandler
 from baseHandler import BaseHandler
@@ -26,11 +27,23 @@ class AnalysisHandler(BaseHandler):
 
     @apiError error_message The error message to display.
     """
-    def post(self):
-        identifier = self.get_body_argument("identifier")
+    def prepare(self):
+        self.identifier = self.get_body_argument("identifier")
+        status_dict = StatusHelper.get_status(self.identifier)
+        if status_dict[Status.Type.OBJECT_TRACKING] == Status.Flag.IN_PROGRESS or status_dict[Status.Type.SAFETY_ANALYSIS] == Status.Flag.IN_PROGRESS:
+            status_code = 423
+            self.error_message = "Currently analyzing your video. Please wait."
+            raise tornado.web.HTTPError(status_code = status_code)
+        if status_dict[Status.Type.CONFIG_HOMOGRAPHY] == Status.Flag.COMPLETE:
+            status_code = 412
+            self.error_message = "Uploading homography did not complete successfully, try re-running it."
+            raise tornaod.web.HTTPError(status_code = status_code)
+        StatusHelper.set_status(self.identifier, Status.Type.OBJECT_TRACKING, Status.Flag.IN_PROGRESS)
+        StatusHelper.set_status(self.identifier, Status.Type.SAFETY_ANALYSIS, Status.Flag.IN_PROGRESS)
 
+    def post(self):
         email = self.get_body_argument("email", default = None)
-        status_code, reason = AnalysisHandler.handler(identifier, email)
+        status_code, reason = AnalysisHandler.handler(self.identifier, email)
 
         if status_code == 200:
             self.finish("Analysis")

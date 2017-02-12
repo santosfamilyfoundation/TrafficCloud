@@ -32,24 +32,24 @@ class CreateHighlightVideoHandler(BaseHandler):
     """
 
     def prepare(self):
-        identifier = self.get_body_argument("identifier")
-        if StatusHelper.get_status(identifier)[Status.Type.HIGHLIGHT_VIDEO] == Status.Flag.IN_PROGRESS:
+        self.identifier = self.get_body_argument("identifier")
+        status_dict = StatusHelper.get_status(self.identifier)
+        if status_dict[Status.Type.HIGHLIGHT_VIDEO] == Status.Flag.IN_PROGRESS:
             status_code = 423
             self.error_message = "Currently creating a highlight video. Please wait."
             raise tornado.web.HTTPError(status_code = status_code)
-        if StatusHelper.get_status(identifier)[Status.Type.SAFETY_ANALYSIS] != Status.Flag.COMPLETE:
+        if status_dict[Status.Type.SAFETY_ANALYSIS] != Status.Flag.COMPLETE:
             status_code = 412
             self.error_message = "Safety analysis did not complete successfully, try re-running it."
             raise tornado.web.HTTPError(status_code = status_code)
-        StatusHelper.set_status(identifier, Status.Type.HIGHLIGHT_VIDEO, Status.Flag.IN_PROGRESS)
+        StatusHelper.set_status(self.identifier, Status.Type.HIGHLIGHT_VIDEO, Status.Flag.IN_PROGRESS)
 
 
     def post(self):
-        identifier = self.get_body_argument('identifier')
         email = self.get_body_argument('email', default=None)
         ttc_threshold = float(self.get_body_argument('ttc_threshold', default=1.5))
         vehicle_only = bool(self.get_body_argument('vehicle_only', default=True))
-        status_code, reason = CreateHighlightVideoHandler.handler(identifier, email, ttc_threshold, vehicle_only)
+        status_code, reason = CreateHighlightVideoHandler.handler(self.identifier, email, ttc_threshold, vehicle_only)
         if status_code == 200:
             self.finish("Create Highlight Video")
         else:

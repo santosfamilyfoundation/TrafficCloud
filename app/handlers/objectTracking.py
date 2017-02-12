@@ -33,23 +33,23 @@ class ObjectTrackingHandler(BaseHandler):
     """
 
     def prepare(self):
-        identifier = self.get_body_argument("identifier")
-        if StatusHelper.get_status(identifier)[Status.Type.OBJECT_TRACKING] == Status.Flag.IN_PROGRESS:
+        self.identifier = self.get_body_argument("identifier")
+        status_dict = StatusHelper.get_status(self.identifier)
+        if status_dict[Status.Type.OBJECT_TRACKING] == Status.Flag.IN_PROGRESS:
             status_code = 423
             self.error_message = "Currently analyzing your video. Please wait."
             raise tornado.web.HTTPError(status_code = status_code)
-        if StatusHelper.get_status(identifier)[Status.Type.CONFIG_HOMOGRAPHY] == Status.Flag.COMPLETE:
+        if status_dict[Status.Type.CONFIG_HOMOGRAPHY] == Status.Flag.COMPLETE:
             status_code = 412
             self.error_message = "Uploading homography did not complete successfully, try re-running it."
             raise tornado.web.HTTPError(status_code = status_code)
-        StatusHelper.set_status(identifier, Status.Type.OBJECT_TRACKING, Status.Flag.IN_PROGRESS)
+        StatusHelper.set_status(self.identifier, Status.Type.OBJECT_TRACKING, Status.Flag.IN_PROGRESS)
 
 
     def post(self):
         # TODO: Implement rerun flag to prevent unnecessary computation
-        identifier = self.get_body_argument("identifier")
         email = self.get_body_argument("email", default = None)
-        status_code, reason = ObjectTrackingHandler.handler(identifier, email, ObjectTrackingHandler.callback)
+        status_code, reason = ObjectTrackingHandler.handler(self.identifier, email, ObjectTrackingHandler.callback)
 
         if status_code == 200:
             self.finish("Object Tracking")
@@ -78,7 +78,7 @@ class ObjectTrackingHandler(BaseHandler):
         if not os.path.exists(project_path):
             StatusHelper.set_status(identifier, Status.Type.OBJECT_TRACKING, Status.Flag.FAILURE)
             return (500, 'Project directory does not exist. Check your identifier?')
-        
+
         ObjectTrackingThread(identifier, email, callback).start()
 
         return (200, "Success")
@@ -91,7 +91,7 @@ class ObjectTrackingThread(threading.Thread):
         self.email = email
 
     def run(self):
-        
+
         project_path = get_project_path(self.identifier)
         tracking_path = os.path.join(project_path, "tracking.cfg")
 

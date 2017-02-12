@@ -28,21 +28,21 @@ class SafetyAnalysisHandler(BaseHandler):
     """
 
     def prepare(self):
-        identifier = self.get_body_argument("identifier")
-        if StatusHelper.get_status(identifier)[Status.Type.SAFETY_ANALYSIS] == Status.Flag.IN_PROGRESS:
+        self.identifier = self.get_body_argument("identifier")
+        status_dict = StatusHelper.get_status(self.identifier)
+        if status_dict[Status.Type.SAFETY_ANALYSIS] == Status.Flag.IN_PROGRESS:
             status_code = 423
             self.error_message = "Currently analyzing database from your video. Please wait."
             raise tornado.web.HTTPError(status_code = status_code)
-        if StatusHelper.get_status(identifier)[Status.Type.OBJECT_TRACKING] != Status.Flag.COMPLETE:
+        if status_dict[Status.Type.OBJECT_TRACKING] != Status.Flag.COMPLETE:
             status_code = 412
             self.error_message = "Object tracking did not complete successfully, try re-running it."
             raise tornado.web.HTTPError(status_code = status_code)
-        StatusHelper.set_status(identifier, Status.Type.SAFETY_ANALYSIS, Status.Flag.IN_PROGRESS)
+        StatusHelper.set_status(self.identifier, Status.Type.SAFETY_ANALYSIS, Status.Flag.IN_PROGRESS)
 
     def post(self):
-        identifier = self.get_body_argument("identifier")
         email = self.get_body_argument("email", default = None)
-        status_code, reason = SafetyAnalysisHandler.handler(identifier, email, SafetyAnalysisHandler.callback)
+        status_code, reason = SafetyAnalysisHandler.handler(self.identifier, email, SafetyAnalysisHandler.callback)
 
         if status_code == 200:
 
@@ -68,9 +68,9 @@ class SafetyAnalysisHandler(BaseHandler):
         if not os.path.exists(project_path):
             StatusHelper.set_status(identifier, Status.Type.SAFETY_ANALYSIS, Status.Flag.FAILURE)
             return (500, 'Project directory does not exist. Check your identifier?')
-        
+
         SafetyAnalysisThread(identifier, email, callback, prediction_method=prediction_method).start()
-        
+
         return (200, "Success")
 
 
