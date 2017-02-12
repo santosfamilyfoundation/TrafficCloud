@@ -29,11 +29,11 @@ class ConfigHomographyHandler(BaseHandler):
 
     def prepare(self):
         self.identifier = self.get_body_argument("identifier")
-        if StatusHelper.get_status(identifier)[Status.Type.CONFIG_HOMOGRAPHY] == Status.Flag.IN_PROGRESS:
+        if StatusHelper.get_status(self.identifier)[Status.Type.CONFIG_HOMOGRAPHY] == Status.Flag.IN_PROGRESS:
             status_code = 423
             self.error_message = "Currently uploading homography. Please wait."
             raise tornado.web.HTTPError(status_code = status_code)
-        StatusHelper.set_status(identifier, Status.Type.CONFIG_HOMOGRAPHY, Status.Flag.IN_PROGRESS)
+        StatusHelper.set_status(self.identifier, Status.Type.CONFIG_HOMOGRAPHY, Status.Flag.IN_PROGRESS)
 
     def post(self):
         self.up_ratio = float(self.get_body_argument('unit_pixel_ratio'))

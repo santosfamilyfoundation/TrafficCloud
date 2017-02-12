@@ -68,6 +68,29 @@ class TestConfigHandler(BaseHandler):
             self.error_message = reason
             raise tornado.web.HTTPError(status_code=status_code)
 
+    def get(self):
+        status = StatusHelper.get_status(self.identifier)
+        if self.test_flag == "feature":
+            if status[Status.Type.FEATURE_TEST] != Status.Flag.COMPLETE:
+                status_code = 500
+                self.error_message = "Feature test not complete, try re-running it."
+                raise tornado.web.HTTPError(status_code = status_code)
+        elif self.test_flag == "object":
+            if status[Status.Type.OBJECT_TEST] != Status.Flag.COMPLETE:
+                status_code = 500
+                self.error_message = "Object test not complete, try re-running it."
+                raise tornado.web.HTTPError(status_code = status_code)
+
+        identifier = self.get_body_argument('identifier')
+        project_path = get_project_path(identifier)
+        self.file_name = os.path.join(project_path, 'feature_video', 'feature_video.mp4')
+
+        self.set_header('Content-Type', 'application/octet-stream')
+        self.set_header('Content-Description', 'File Transfer')
+        self.set_header('Content-Disposition', 'attachment; filename=' + self.file_name)
+        self.write_file_stream(self.file_name)
+        self.finish()
+
     @staticmethod
     def handler(identifier, frame_start, num_frames, test_flag):
         if test_flag == "feature":
@@ -202,6 +225,3 @@ class TestConfigObjectThread(threading.Thread):
 
         StatusHelper.set_status(self.identifier, Status.Type.OBJECT_TEST, Status.Flag.COMPLETE)
         return self.callback(200, "Test config done", self.identifier)
-
-
-

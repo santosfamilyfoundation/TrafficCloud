@@ -22,6 +22,7 @@ class RetrieveResultsHandler(BaseHandler):
 
     @apiError error_message The error message to display.
     """
+
     def get(self):
         identifier = self.get_body_argument('identifier')
         project_path = get_project_path(identifier)
@@ -41,8 +42,13 @@ class RetrieveResultsHandler(BaseHandler):
             for file in files:
                 file_path = os.path.join(root, file)
                 zipf.write(file_path, file)
-        # Write report
-        zipf.write(file_report, os.path.basename(file_report))
+        # Write report, if there
+        try:
+            zipf.write(file_report, os.path.basename(file_report))
+        except:
+            status_code = 500
+            self.error_message = "Report was not generated for sending. Try re-running generation."
+            raise tornado.web.HTTPError(status_code = status_code)
         zipf.close()
 
         self.set_header('Content-Type', 'application/zip')
