@@ -30,7 +30,7 @@ class TestConfigHandler(BaseHandler):
 
     @apiError error_message The error message to display.
     """
-    
+
     def prepare(self):
         identifier = self.get_body_argument("identifier")
         test_flag = self.get_body_argument("test_flag")
@@ -50,7 +50,7 @@ class TestConfigHandler(BaseHandler):
             status_code = 423
             self.error_message = "Currently running a test. Please wait."
             raise tornado.web.HTTPError(status_code = status_code)
-        
+
         StatusHelper.set_status(identifier, status_type, Status.Flag.IN_PROGRESS)
 
     def post(self):
@@ -69,6 +69,21 @@ class TestConfigHandler(BaseHandler):
         else:
             self.error_message = reason
             raise tornado.web.HTTPError(status_code=status_code)
+
+    def get(self):
+        # TODO status check that post is done
+        
+
+        # TODO send over video stuff
+        identifier = self.get_body_argument('identifier')
+        project_path = get_project_path(identifier)
+        self.file_name = os.path.join(project_path, 'video.avi') # TODO not test video filename
+
+        self.set_header('Content-Type', 'application/octet-stream')
+        self.set_header('Content-Description', 'File Transfer')
+        self.set_header('Content-Disposition', 'attachment; filename=' + self.file_name)
+        self.write_file_stream(self.file_name)
+        self.finish()
 
     @staticmethod
     def handler(identifier, frame_start, num_frames, test_flag):
@@ -204,6 +219,3 @@ class TestConfigObjectThread(threading.Thread):
 
         StatusHelper.set_status(self.identifier, Status.Type.OBJECT_TEST, Status.Flag.COMPLETE)
         return self.callback(200, "Test config done", self.identifier)
-
-
-
