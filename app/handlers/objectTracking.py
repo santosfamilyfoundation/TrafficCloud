@@ -39,7 +39,7 @@ class ObjectTrackingHandler(BaseHandler):
             status_code = 423
             self.error_message = "Currently analyzing your video. Please wait."
             raise tornado.web.HTTPError(status_code = status_code)
-        if status_dict[Status.Type.CONFIG_HOMOGRAPHY] == Status.Flag.COMPLETE:
+        if status_dict[Status.Type.CONFIG_HOMOGRAPHY] != Status.Flag.COMPLETE:
             status_code = 412
             self.error_message = "Uploading homography did not complete successfully, try re-running it."
             raise tornado.web.HTTPError(status_code = status_code)
