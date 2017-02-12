@@ -85,7 +85,7 @@ class TestConfigHandler(BaseHandler):
 
         identifier = self.get_body_argument('identifier')
         project_path = get_project_path(identifier)
-        self.file_name = os.path.join(project_path, 'video.avi') # TODO not test video filename
+        self.file_name = os.path.join(project_path, 'feature_video', 'feature_video.mp4')
 
         self.set_header('Content-Type', 'application/octet-stream')
         self.set_header('Content-Description', 'File Transfer')
