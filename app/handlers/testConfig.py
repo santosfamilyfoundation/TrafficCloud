@@ -71,10 +71,18 @@ class TestConfigHandler(BaseHandler):
             raise tornado.web.HTTPError(status_code=status_code)
 
     def get(self):
-        # TODO status check that post is done
-        
+        status = StatusHelper.get_status(self.identifier)
+        if test_flag == "feature":
+            if status[Status.Type.FEATURE_TEST] != Status.Flag.COMPLETE:
+                status_code = 500
+                self.error_message = "Feature test not complete, try re-running it."
+                raise tornado.web.HTTPError(status_code = status_code)
+        elif test_flag == "object":
+            if status[Status.Type.OBJECT_TEST] != Status.Flag.COMPLETE:
+                status_code = 500
+                self.error_message = "Object test not complete, try re-running it."
+                raise tornado.web.HTTPError(status_code = status_code)
 
-        # TODO send over video stuff
         identifier = self.get_body_argument('identifier')
         project_path = get_project_path(identifier)
         self.file_name = os.path.join(project_path, 'video.avi') # TODO not test video filename
