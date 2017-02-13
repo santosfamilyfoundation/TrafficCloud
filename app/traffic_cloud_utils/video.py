@@ -41,7 +41,7 @@ def create_highlight_video(project_path, video_path, list_of_near_misses):
     delete_files(videos_folder, excluded_files=[tracking_filename])
 
     for i, near_miss in enumerate(list_of_near_misses):
-        start_frame, end_frame, object_id1, object_id2 = near_miss
+        start_frame, end_frame, object_id1, object_id2, ttc = near_miss
 
         # Create a short video snippet of the near miss interaction
         snippet_number = 2*i + 1

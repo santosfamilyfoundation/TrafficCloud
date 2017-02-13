@@ -83,6 +83,11 @@ class CreateHighlightVideoHandler(BaseHandler):
             StatusHelper.set_status(identifier, Status.Type.HIGHLIGHT_VIDEO, Status.Flag.FAILURE)
             return (500, str(error_message))
 
+        near_misses = sorted(near_misses, key=(lambda x: x[4]))
+        num_near_misses_to_use = 5
+        if len(near_misses) > num_near_misses_to_use:
+	    near_misses = near_misses[:num_near_misses_to_use]
+
         try:
             CreateHighlightVideoThread(identifier, project_dir, video_path, near_misses, email, CreateHighlightVideoHandler.callback).start()
         except Exception as error_message:
