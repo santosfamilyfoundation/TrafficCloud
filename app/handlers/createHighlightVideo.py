@@ -13,7 +13,6 @@ from traffic_cloud_utils.app_config import get_project_path, get_project_video_p
 from traffic_cloud_utils.statusHelper import StatusHelper, Status
 from traffic_cloud_utils.emailHelper import EmailHelper
 
-# TODO: remove once pip's error request handler is written
 class CreateHighlightVideoHandler(BaseHandler):
     """
     @api {post} /highlightVideo/ Highlight Video
@@ -25,6 +24,7 @@ class CreateHighlightVideoHandler(BaseHandler):
     @apiParam {String} identifier The identifier of the project to create a highlight video for.
     @apiParam {Float} [ttc_threshold] Threshold for determining whether an interaction is dangerous. Default 1.5 seconds.
     @apiParam {Integer} [vehicle_only] Flag for specifying only vehicle-vehicle interactions. Default to True.
+    @apiParam {Integer} [num_near_misses_to_use] Number of near misses to use in creating the highlight video. If provided a value greater than 10, it will default to 10.
 
     @apiSuccess status_code The API will return a status code of 200 upon success.
 
@@ -49,7 +49,8 @@ class CreateHighlightVideoHandler(BaseHandler):
         email = self.get_body_argument('email', default=None)
         ttc_threshold = float(self.get_body_argument('ttc_threshold', default=1.5))
         vehicle_only = bool(self.get_body_argument('vehicle_only', default=True))
-        status_code, reason = CreateHighlightVideoHandler.handler(self.identifier, email, ttc_threshold, vehicle_only)
+        num_near_misses_to_use = int(self.get_body_argument('num_near_misses_to_use', default=10))
+        status_code, reason = CreateHighlightVideoHandler.handler(self.identifier, email, ttc_threshold, vehicle_only, num_near_misses_to_use)
         if status_code == 200:
             self.finish("Create Highlight Video")
         else:
@@ -57,7 +58,7 @@ class CreateHighlightVideoHandler(BaseHandler):
             raise tornado.web.HTTPError(status_code=status_code)
 
     @staticmethod
-    def handler(identifier, email, ttc_threshold, vehicle_only):
+    def handler(identifier, email, ttc_threshold, vehicle_only, num_near_misses_to_use):
 
         project_dir = get_project_path(identifier)
         if not os.path.exists(project_dir):
@@ -83,8 +84,7 @@ class CreateHighlightVideoHandler(BaseHandler):
             StatusHelper.set_status(identifier, Status.Type.HIGHLIGHT_VIDEO, Status.Flag.FAILURE)
             return (500, str(error_message))
 
-        near_misses = sorted(near_misses, key=(lambda x: x[4]))
-        num_near_misses_to_use = 5
+        num_near_misses_to_use = min(10, num_near_misses_to_use)
         if len(near_misses) > num_near_misses_to_use:
 	    near_misses = near_misses[:num_near_misses_to_use]
 
