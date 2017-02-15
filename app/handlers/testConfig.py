@@ -34,7 +34,6 @@ class TestConfigHandler(BaseHandler):
     def prepare(self):
         self.identifier = self.get_body_argument("identifier")
         self.test_flag = self.get_body_argument("test_flag")
-        print self.request.headers
         status_dict = StatusHelper.get_status(self.identifier)
         if self.test_flag == "feature":
             status_type = Status.Type.FEATURE_TEST
@@ -54,17 +53,16 @@ class TestConfigHandler(BaseHandler):
             raise tornado.web.HTTPError(status_code = status_code)
 
         request_type = self.request.method
-        print request_type
         if request_type == 'POST':
             StatusHelper.set_status(self.identifier, status_type, Status.Flag.IN_PROGRESS)
         elif request_type == 'GET':
             if self.test_flag == "feature":
-                if status[Status.Type.FEATURE_TEST] != Status.Flag.COMPLETE:
+                if status_dict[Status.Type.FEATURE_TEST] != Status.Flag.COMPLETE:
                     status_code = 500
                     self.error_message = "Feature test not complete, try re-running it."
                     raise tornado.web.HTTPError(status_code = status_code)
             elif self.test_flag == "object":
-                if status[Status.Type.OBJECT_TEST] != Status.Flag.COMPLETE:
+                if status_dict[Status.Type.OBJECT_TEST] != Status.Flag.COMPLETE:
                     status_code = 500
                     self.error_message = "Object test not complete, try re-running it."
                     raise tornado.web.HTTPError(status_code = status_code)
@@ -85,13 +83,11 @@ class TestConfigHandler(BaseHandler):
 
     def get(self):
         status = StatusHelper.get_status(self.identifier)
+        project_path = get_project_path(self.identifier)
         if self.test_flag == "feature":
             self.file_name = os.path.join(project_path, 'feature_video', 'feature_video.mp4')
         elif self.test_flag == "object":
             self.file_name = os.path.join(project_path, 'object_video', 'object_video.mp4')
-
-        identifier = self.get_body_argument('identifier')
-        project_path = get_project_path(identifier)
 
         self.set_header('Content-Type', 'application/octet-stream')
         self.set_header('Content-Description', 'File Transfer')
