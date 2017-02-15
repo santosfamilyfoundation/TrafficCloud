@@ -5,20 +5,20 @@ import tornado.web
 from baseHandler import BaseHandler
 from traffic_cloud_utils.app_config import get_project_path, get_project_video_path
 from traffic_cloud_utils.video import get_framerate
-from traffic_cloud_utils.plotting.visualization import vel_cdf
+from traffic_cloud_utils.plotting.visualization import vel_distribution
 
 import json
 import traceback
 
-class CreateSpeedCDFHandler(BaseHandler):
+class CreateSpeedDistributionHandler(BaseHandler):
     """
-    @api {post} /speedCDF/ Speed CDF
-    @apiName SpeedCDF
+    @api {post} /speedDistribution/ Speed Distribution
+    @apiName SpeedDistribution
     @apiVersion 0.1.0
     @apiGroup Results
-    @apiDescription Calling this route will create a graph of the speed CDF's from a specified project.
+    @apiDescription Calling this route will create a graph of the speed Distribution's from a specified project.
 
-    @apiParam {String} identifier The identifier of the project to create a speed CDF for.
+    @apiParam {String} identifier The identifier of the project to create a speed Distribution for.
     @apiParam {Integer} [speed_limit] speed limit of the intersection. Defaults to 25 mph.
     @apiParam {Boolean} [vehicle_only] Flag for specifying only vehicle speeds
 
@@ -30,9 +30,9 @@ class CreateSpeedCDFHandler(BaseHandler):
         identifier = self.get_body_argument('identifier')
         speed_limit = int(self.get_body_argument('speed_limit', default=25))
         vehicle_only = bool(self.get_body_argument('vehicle_only', default=True))
-        status_code, reason = CreateSpeedCDFHandler.handler(identifier, speed_limit, vehicle_only)
+        status_code, reason = CreateSpeedDistributionHandler.handler(identifier, speed_limit, vehicle_only)
         if status_code == 200:
-            self.finish("Create Speed CDF")
+            self.finish("Create Speed Distribution")
         else:
             raise tornado.web.HTTPError(reason=reason, status_code=status_code)
 
@@ -54,6 +54,6 @@ class CreateSpeedCDFHandler(BaseHandler):
         if not os.path.exists(video_path):
             return (500, 'Source video file does not exist.  Was the video uploaded?')
 
-        vel_cdf(db, float(get_framerate(video_path)), speed_limit, final_images, vehicle_only)
+        vel_distribution(db, float(get_framerate(video_path)), speed_limit, final_images, vehicle_only)
 
         return (200, "Success")

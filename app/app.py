@@ -37,7 +37,7 @@ from handlers.status import StatusHandler
 from handlers.createHighlightVideo import CreateHighlightVideoHandler
 from handlers.makeReport import MakeReportHandler
 from handlers.roadUserCounts import RoadUserCountsHandler
-from handlers.createSpeedCDF import CreateSpeedCDFHandler
+from handlers.createSpeedDistribution import CreateSpeedDistributionHandler
 from handlers.retrieveResults import RetrieveResultsHandler
 from handlers.createHighlightVideo import CreateHighlightVideoHandler
 
@@ -61,7 +61,7 @@ class Application(tornado.web.Application):
             (r"/highlightVideo", CreateHighlightVideoHandler),
             (r"/makeReport", MakeReportHandler),
             (r"/roadUserCounts", RoadUserCountsHandler),
-            (r"/speedCDF", CreateSpeedCDFHandler),
+            (r"/speedDistribution", CreateSpeedDistributionHandler),
             (r"/retrieveResults", RetrieveResultsHandler)
 
         ]

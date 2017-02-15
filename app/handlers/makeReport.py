@@ -45,7 +45,6 @@ class MakeReportHandler(BaseHandler):
         # Hardcoded image file name order, so that the ordering of visuals in the report is consistent
         image_fns = [
             os.path.join(final_images, 'road_user_icon_counts.jpg'),
-            os.path.join(final_images, 'velocityCDF.jpg'),
             os.path.join(final_images, 'velocityPDF.jpg')
         ]
 

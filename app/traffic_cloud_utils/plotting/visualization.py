@@ -286,7 +286,7 @@ def vel_histograms(fig, filename, fps, vistype='overall'):
     connection.commit()
     connection.close()
 
-def vel_cdf(filename, fps, speed_limit=25, dir=None, only_vehicle=True):
+def vel_distribution(filename, fps, speed_limit=25, dir=None, only_vehicle=True):
     """
     Arguments
     ---------
@@ -342,18 +342,10 @@ def vel_cdf(filename, fps, speed_limit=25, dir=None, only_vehicle=True):
     kdepdf = EstimatedPdf(obj_vels)
     pr = cdf.PercentileRank(speed_limit)
 
-    thinkplot.PrePlot(1)
     titlestring = "{:0.1f} % of {} are exceeding the {} mph limit".format(
         100 - pr,
         'vehicles' if only_vehicle else 'road users',
         speed_limit)
-    thinkplot.Cdf(cdf)
-    thinkplot.Vlines(speed_limit, 0, 1)
-    thinkplot.Config(title=titlestring, xlabel='Velocity (mph)', ylabel='CDF')
-    if dir is not None:
-        thinkplot.Save(os.path.join(dir, 'velocityCDF'), formats=['jpg'], bbox_inches='tight')
-    else:
-        thinkplot.Show()
 
     thinkplot.PrePlot(1)
     thinkplot.Pdf(kdepdf)
@@ -502,7 +494,7 @@ if __name__ == '__main__':
     parser.add_argument('roadImageFile', nargs='?', metavar='<Image>',
                         help='The name of the image file containing the video still')
     parser.add_argument('--vis-type', dest='vis_type', help='The visualization you wish to generate. ',
-                        choices=['user-chart', 'vel-indiv', 'vel-overall', 'vel-user', 'trajectories', 'vel-overall-cdf'])
+                        choices=['user-chart', 'vel-indiv', 'vel-overall', 'vel-user', 'trajectories', 'vel-overall-distribution'])
 
     args = parser.parse_args()
 
@@ -514,8 +506,8 @@ if __name__ == '__main__':
         vel_histograms(args.db, args.fps, 'overall')
     elif (args.vis_type == 'vel-user'):
         road_user_vels(args.db, args.fps)
-    elif (args.vis_type == 'vel-overall-cdf'):
-        vel_cdf(args.db, args.fps)
+    elif (args.vis_type == 'vel-overall-distribution'):
+        vel_distribution(args.db, args.fps)
     elif (args.vis_type == 'trajectories'):
         road_user_traj(
             args.db, args.fps, args.homographyFile, args.roadImageFile)
