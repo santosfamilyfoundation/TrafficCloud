@@ -16,9 +16,9 @@ class CreateSpeedDistributionHandler(BaseHandler):
     @apiName SpeedDistribution
     @apiVersion 0.1.0
     @apiGroup Results
-    @apiDescription Calling this route will create a graph of the speed Distribution's from a specified project.
+    @apiDescription Calling this route will create a graph of the speed distribution from a specified project.
 
-    @apiParam {String} identifier The identifier of the project to create a speed Distribution for.
+    @apiParam {String} identifier The identifier of the project to create a speed distribution for.
     @apiParam {Integer} [speed_limit] speed limit of the intersection. Defaults to 25 mph.
     @apiParam {Boolean} [vehicle_only] Flag for specifying only vehicle speeds
 

@@ -19,8 +19,8 @@ class ConfigHomographyHandler(BaseHandler):
 
     @apiParam {String} identifier The identifier of the project for which to configure the homography.
     @apiParam {Integer} unit_pixel_ratio The unit_pixel_ratio of the images (ie. 0.05 meters per pixel).
-    @apiParam {JSON Array} aerial_pts A JSON array containing the coordinates of point clicks on the aerial image as arrays in the form [x_coord, y_coord]
-    @apiParam {JSON Array} camera_pts A JSON array containing the coordinates of point clicks on the camera image as arrays in the form [x_coord, y_coord]
+    @apiParam {JSON} aerial_pts A JSON array containing the coordinates of point clicks on the aerial image as arrays in the form [x_coord, y_coord]
+    @apiParam {JSON} camera_pts A JSON array containing the coordinates of point clicks on the camera image as arrays in the form [x_coord, y_coord]
 
     @apiSuccess status_code The API will return a status code of 200 upon success.
 
