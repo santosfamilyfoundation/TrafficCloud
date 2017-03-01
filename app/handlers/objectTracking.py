@@ -108,9 +108,17 @@ class ObjectTrackingThread(threading.Thread):
         if os.path.exists(db_path):  # If results database already exists,
             os.remove(db_path)  # then remove it--it'll be recreated.
 
+        fbttf_call = ["feature-based-tracking", tracking_path, "--tf", "--database-filename", db_path]
+        fbtgf_call = ["feature-based-tracking", tracking_path, "--gf", "--database-filename", db_path]
+
+        mask_filename = os.path.join(get_project_path(self.identifier), "mask.jpg")
+        if os.path.exists(mask_filename):
+            fbttf_call.extend(["--mask-filename", mask_filename])
+            fbtgf_call.extend(["--mask-filename", mask_filename])
+
         try:
-            subprocess.check_call(["feature-based-tracking", tracking_path, "--tf", "--database-filename", db_path])
-            subprocess.check_call(["feature-based-tracking", tracking_path, "--gf", "--database-filename", db_path])
+            subprocess.check_call(fbttf_call)
+            subprocess.check_call(fbtgf_call)
             subprocess.check_call(["classify-objects.py", "--cfg", tracking_path, "-d", db_path])  # Classify road users
         except subprocess.CalledProcessError as excp:
             StatusHelper.set_status(self.identifier, Status.Type.OBJECT_TRACKING, Status.Flag.FAILURE)

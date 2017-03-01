@@ -162,8 +162,12 @@ class TestConfigFeatureThread(threading.Thread):
         if not os.path.exists(images_folder):
             os.mkdir(images_folder)
 
+        fbt_call = ["feature-based-tracking", tracking_path, "--tf", "--database-filename", db_path]
+        mask_filename = os.path.join(get_project_path(self.identifier), "mask.jpg")
+        if os.path.exists(mask_filename):
+            fbt_call.extend(["--mask-filename", mask_filename])
         try:
-            subprocess.check_call(["feature-based-tracking", tracking_path, "--tf", "--database-filename", db_path])
+            subprocess.check_call(fbt_call)
             subprocess.check_call(["display-trajectories.py", "-i", get_project_video_path(self.identifier), "-d", db_path, "-o", project_path + "/homography/homography.txt", "-t", "feature", "--save-images", "-f", str(self.frame_start), "--last-frame", str(self.frame_start + self.num_frames), "--output-directory", images_folder])
         except subprocess.CalledProcessError as err_msg:
             StatusHelper.set_status(self.identifier, Status.Type.FEATURE_TEST, Status.Flag.FAILURE)
