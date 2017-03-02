@@ -22,6 +22,7 @@ import cleanup
 from handlers.upload import UploadHandler
 from handlers.uploadVideo import UploadVideoHandler
 from handlers.homography import HomographyHandler
+from handlers.mask import UploadMask 
 
 # Configure routes
 from handlers.config import ConfigHandler
@@ -57,6 +58,7 @@ class Application(tornado.web.Application):
             (r"/upload", UploadHandler),
             (r"/uploadVideo", UploadVideoHandler),
             (r"/homography", HomographyHandler),
+            (r"/mask", UploadMask),
             (r"/config", ConfigHandler),
             (r"/testConfig", TestConfigHandler),
             (r"/defaultConfig", DefaultConfigHandler),
