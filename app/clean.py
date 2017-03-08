@@ -76,7 +76,6 @@ def execute_command(db):
 
     return True
 
-<<<<<<< HEAD
 def change_user_type(db, object_id, type_as_abbr):
     """
     object_id: int, i.e. 14
