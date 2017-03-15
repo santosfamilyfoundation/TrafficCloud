@@ -9,8 +9,6 @@ merged = {}
 
 
 
-
-
 ## Clean step
 def clean(db):
     raw_input('Press enter to begin cleaning')

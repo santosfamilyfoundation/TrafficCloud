@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 tracking_filename = "tracking.mp4"
 highlight_filename = "highlight.mp4"
 
-def create_tracking_video(project_path, video_path, num_frames_per_vid=60, n_frames_step=1):
+def create_tracking_video(project_path, video_path, num_frames_per_vid=500, n_frames_step=4):
     videos_folder = os.path.join(project_path, "final_videos")
     temp_video_prefix = "temp_tracking_video-"
 
