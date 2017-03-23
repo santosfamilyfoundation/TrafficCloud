@@ -6,13 +6,13 @@ import matplotlib.pyplot as plt
 tracking_filename = "tracking.mp4"
 highlight_filename = "highlight.mp4"
 
-def create_tracking_video(project_path, video_path):
+def create_tracking_video(project_path, video_path, num_frames_per_vid=500, n_frames_step=4):
     videos_folder = os.path.join(project_path, "final_videos")
     temp_video_prefix = "temp_tracking_video-"
 
     count = 0
-    num_frames_per_vid = 60
     num_frames = get_number_of_frames(video_path)
+    print "Number of Frames: %s" % num_frames
 
     # Make the videos folder if it doesn't exists
     if not os.path.exists(videos_folder):
@@ -22,7 +22,8 @@ def create_tracking_video(project_path, video_path):
 
     # Create a bunch of short videos ("snippets")
     while num_frames_per_vid * count < num_frames:
-        create_video_snippet(project_path, video_path, videos_folder, temp_video_prefix, count, count*num_frames_per_vid, (count + 1)*num_frames_per_vid - 1)
+        create_video_snippet(project_path, video_path, videos_folder, temp_video_prefix, count,
+                count*num_frames_per_vid, (count + 1)*num_frames_per_vid - 1, n_frames_step=n_frames_step)
         count += 1
 
     combine_videos(videos_folder, temp_video_prefix, tracking_filename)
@@ -114,14 +115,13 @@ def get_list_of_files(folder, prefix, extension):
 #### Video Metadata
 
 def get_number_of_frames(videopath):
-    num = int(subprocess.check_output(["ffprobe",
-        "-v", "error",
-        "-count_frames",
-        "-select_streams", "v:0",
-        "-show_entries", "stream=nb_read_frames",
-        "-of", "default=nokey=1:noprint_wrappers=1",
-        videopath]))
-    return num
+    """ fast cmdline way to get # of frames taken from
+    http://stackoverflow.com/questions/2017843/fetch-frame-count-with-ffmpeg#comment-72336543
+    """
+    if os.path.exists(videopath):
+        cmd = "ffmpeg -i %s -vcodec copy -acodec copy -f null /dev/null 2>&1 | grep -Eo 'frame= *[0-9]+ *' | grep -Eo '[0-9]+' | tail -1" % videopath
+        num = subprocess.check_output(cmd, shell=True)
+        return num
 
 def get_framerate(videopath):
     list_o = str(subprocess.check_output(["ffprobe",
@@ -154,7 +154,7 @@ def create_video_from_images(images_dir, prefix, video_dir, video_filename, fram
     renumber_frames(images_dir, frame1, prefix, extension)
     convert_frames_to_video(framerate, images_dir, video_dir, prefix, video_filename, 1.0)
 
-def create_video_snippet(project_path, video_path, videos_folder, file_prefix, video_number, start_frame, end_frame, pts_multiplier=1.0, interacting_objects=None):
+def create_video_snippet(project_path, video_path, videos_folder, file_prefix, video_number, start_frame, end_frame, pts_multiplier=1.0, interacting_objects=None, n_frames_step =1):
     images_folder = os.path.join(project_path, "temp_images")
     db_path = os.path.join(project_path, "run", "results.sqlite")
     temp_image_prefix = "image-"
@@ -175,6 +175,7 @@ def create_video_snippet(project_path, video_path, videos_folder, file_prefix, v
         "--save-images",
         "-f", str(start_frame),
         "--last-frame", str(end_frame),
+        "-s", str(n_frames_step),
         "--output-directory", images_folder,
         ]
     if interacting_objects is not None:
@@ -182,7 +183,7 @@ def create_video_snippet(project_path, video_path, videos_folder, file_prefix, v
     subprocess.call(display_trajectories_call)
 
     # Get the frames, and create a short video out of them
-    renumber_frames(images_folder, start_frame, temp_image_prefix, "png")
+    renumber_frames(images_folder, start_frame, temp_image_prefix, "png", n_frames_step)
     convert_frames_to_video(get_framerate(video_path), images_folder, videos_folder, temp_image_prefix, file_prefix + str(video_number) + ".mpg", pts_multiplier)
 
 def create_video_from_image(folder, image_filename, video_filename, duration):
@@ -214,7 +215,7 @@ def combine_videos(videos_folder, temp_video_prefix, filename):
 
 ### Images Helpers
 
-def renumber_frames(folder, start_frame, prefix, extension):
+def renumber_frames(folder, start_frame, prefix, extension, n_frames_step=1):
     temp_folder = os.path.join(folder, "temp")
     # Make the temp folder if it doesn't exists
     if not os.path.exists(temp_folder):
@@ -232,6 +233,7 @@ def renumber_frames(folder, start_frame, prefix, extension):
                     num = None
                     try:
                         num = int(number) - int(start_frame)
+                        num /= n_frames_step
                     except Exception as e:
                         print("Couldn't parse to int: "+file+" from prefix: "+prefix)
                         print("Value of number was: " + number+" of type: "+str(type(number)))

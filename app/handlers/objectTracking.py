@@ -7,6 +7,8 @@ import tornado.web
 
 import threading
 
+from storage import getObjectCount
+
 from baseHandler import BaseHandler
 
 from traffic_cloud_utils.plotting.make_object_trajectories import main as db_make_objtraj
@@ -119,7 +121,19 @@ class ObjectTrackingThread(threading.Thread):
         try:
             subprocess.check_call(fbttf_call)
             subprocess.check_call(fbtgf_call)
-            subprocess.check_call(["classify-objects.py", "--cfg", tracking_path, "-d", db_path])  # Classify road users
+
+            #Classify Road Users with -s, -n
+            total_objs = getObjectCount(db_path)
+            num_objs = 100
+            for start_index in xrange(0,total_objs,num_objs):
+                if start_index+num_objs>total_objs:
+                    num_objs = total_objs%num_objs
+                subprocess.check_call(["classify-objects.py",\
+                                        "--cfg", tracking_path,\
+                                        "-d", db_path,\
+                                        "-s", str(start_index),\
+                                        "-n", str(num_objs)])
+
         except subprocess.CalledProcessError as excp:
             StatusHelper.set_status(self.identifier, Status.Type.OBJECT_TRACKING, Status.Flag.FAILURE)
             return self.callback(500, excp.output, self.identifier, self.email)
