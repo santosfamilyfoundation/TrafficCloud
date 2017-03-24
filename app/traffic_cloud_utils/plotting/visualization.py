@@ -45,9 +45,9 @@ def road_user_traj(fig, filename, fps, homographyFile, roadImageFile):
     queryStatement = 'SELECT * FROM objects ORDER BY object_id'
     cursor.execute(queryStatement)
 
-    usertypes = []
+    usertypes = {}
     for row in cursor:
-        usertypes.append(row[1])
+        usertypes[row[0]] = row[1]
 
     queryStatement = 'SELECT * FROM object_trajectories ORDER BY object_id, frame'
     cursor.execute(queryStatement)
@@ -58,21 +58,23 @@ def road_user_traj(fig, filename, fps, homographyFile, roadImageFile):
 
     # aplot = QTPLT()
     ax = fig.add_subplot(111)
+    ax.set_axis_off()
     im = imread(roadImageFile)
     implot = ax.imshow(im)
 
     # colors = [(0,0,0), (0,0,1), (0,1,0), (1,0,1), (0,1,1), (1,1,0), (1,0,1)]
     userlist = ['unknown', 'car', 'pedestrian',
                 'motorcycle', 'bicycle', 'bus', 'truck']
-    colors = {'unknown': (0, 0, 0), 'car': (0, 0, 1), 'pedestrian': (0, 1, 0), 'motorcycle': (
-        1, 0, 0), 'bicycle': (0, 1, 1), 'bus': (1, 1, 0), 'truck': (1, 0, 1)}
+    alpha = 0.22
+    colors = {'unknown': (0, 0, 0, alpha), 'car': (0, 0, 1, alpha), 'pedestrian': (0, 1, 0, alpha), 'motorcycle': (
+        1, 0, 0, alpha), 'bicycle': (0, 1, 1, alpha), 'bus': (1, 1, 0, alpha), 'truck': (1, 0, 1, alpha)}
 
     for row in cursor:
         pos = Point(row[2], row[3])
         # xpos = row[2]
         # ypos = row[3]
 
-        # usertype = usertypes[obj_id]
+        usertype = usertypes[obj_id]
 
         # print pos.x, pos.y
         pos = pos.project(homography)
@@ -83,12 +85,13 @@ def road_user_traj(fig, filename, fps, homographyFile, roadImageFile):
 
         if(row[0] != obj_id):
             # color = random.choice(colors)
-            usertype = userlist[usertypes[obj_id]]
+            usertype = userlist[usertype]
 
-            ax.plot(obj_traj_x[:-1], obj_traj_y[:-1], ".-",
+            if usertype == 'pedestrian' or usertype == 'bicycle':
+                ax.plot(obj_traj_x[:-1], obj_traj_y[:-1], ".-",
                     color=colors[usertype], label=usertype, linewidth=2, markersize=3)
 
-            # print 'switching object to: ', row[0]
+            print 'switching object to: ', row[0]
             obj_id = row[0]
             obj_traj_x = []
             obj_traj_y = []
@@ -102,9 +105,10 @@ def road_user_traj(fig, filename, fps, homographyFile, roadImageFile):
 
     colorlist = []
     recs = []
-    for i in range(0, len(userlist)):
+    # pedestrians and bike trajectory only
+    for idx, i in enumerate([2, 4]):
         colorlist.append(colors[userlist[i]])
-        recs.append(mpatches.Rectangle((0, 0), 1, 1, fc=colorlist[i]))
+        recs.append(mpatches.Rectangle((0, 0), 1, 1, fc=colorlist[idx]))
     ax.set_position([0.1, 0.1, 0.85, 0.85])
     # ax.legend(recs,userlist, loc='center left', bbox_to_anchor=(1, 0.5))
     ax.legend(recs, userlist, loc=8, mode="expand",
@@ -115,7 +119,7 @@ def road_user_traj(fig, filename, fps, homographyFile, roadImageFile):
         [box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
 
     # Put a legend below current axis
-    ax.legend(recs, userlist, loc='upper center', bbox_to_anchor=(
+    ax.legend(recs, [userlist[i] for i in [2,4]], loc='upper center', bbox_to_anchor=(
         0.5, -0.05), fancybox=True, shadow=True, ncol=4)
     # ax.legend(recs, userlist, bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0.)
 
@@ -316,7 +320,7 @@ def vel_distribution(filename, fps, speed_limit=25, dir=None, only_vehicle=True)
     for row in cursor:
         xvel = row[4]
         yvel = row[5]
-        
+
         xvels.append(xvel*fps*MPS_MPH_CONVERSION)
         yvels.append(yvel*fps*MPS_MPH_CONVERSION)
 
@@ -392,7 +396,7 @@ def road_user_counts(filename):
         roadusercounts[user] = len(roadusers[user])
 
     return roadusercounts
-     
+
 def road_user_chart(filename):
     """Creates a bar graph chart of road user counts"""
     roadusercounts = road_user_counts(filename)
