@@ -121,17 +121,17 @@ class ObjectTrackingThread(threading.Thread):
             subprocess.check_call(fbttf_call)
             subprocess.check_call(fbtgf_call)
 
-            #Classify Road Users with -s, -n
+            #Classify Road Users in batches
             total_objs = getObjectCount(db_path)
-            num_objs = 100
-            for start_index in xrange(0,total_objs,num_objs):
-                if start_index+num_objs>total_objs:
-                    num_objs = total_objs%num_objs
+            batch_size = 100
+            for start_index in xrange(0,total_objs,batch_size):
+                if start_index+batch_size>total_objs:
+                    batch_size = total_objs%batch_size
                 subprocess.check_call(["classify-objects.py",\
                                         "--cfg", tracking_path,\
                                         "-d", db_path,\
                                         "-s", str(start_index),\
-                                        "-n", str(num_objs)])
+                                        "-n", str(batch_size)])
 
         except subprocess.CalledProcessError as excp:
             StatusHelper.set_status(self.identifier, Status.Type.OBJECT_TRACKING, Status.Flag.FAILURE)
