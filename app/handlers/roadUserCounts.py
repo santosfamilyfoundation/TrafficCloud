@@ -26,7 +26,8 @@ class RoadUserCountsHandler(BaseHandler):
     """
     def get(self):
         identifier = self.find_argument('identifier')
-        regen_flag = self.find_argument('regenerate')
+        regen_flag = bool(self.find_argument('regenerate', default=False))
+        status_code = 200
         if regen_flag:
             status_code, reason = RoadUserCountsHandler.handler(identifier)
         if status_code == 200:
