@@ -12,7 +12,7 @@ import traceback
 
 class CreateSpeedDistributionHandler(BaseHandler):
     """
-    @api {post} /speedDistribution/ Speed Distribution
+    @api {GET} /speedDistribution/ Speed Distribution
     @apiName SpeedDistribution
     @apiVersion 0.1.0
     @apiGroup Results
@@ -21,20 +21,34 @@ class CreateSpeedDistributionHandler(BaseHandler):
     @apiParam {String} identifier The identifier of the project to create a speed distribution for.
     @apiParam {Integer} [speed_limit] speed limit of the intersection. Defaults to 25 mph.
     @apiParam {Boolean} [vehicle_only] Flag for specifying only vehicle speeds
+    @apiParam {Boolean} regenerate A boolean identifying whether the distribution image should be recreated.
 
     @apiSuccess status_code The API will return a status code of 200 upon success.
 
     @apiError error_message The error message to display.
     """
-    def post(self):
+    def get(self):
         identifier = self.find_argument('identifier')
-        speed_limit = int(self.find_argument('speed_limit', default=25))
-        vehicle_only = bool(self.find_argument('vehicle_only', default=True))
-        status_code, reason = CreateSpeedDistributionHandler.handler(identifier, speed_limit, vehicle_only)
+        regen_flag = bool(self.find_argument('regenerate', default=False))
+        status_code = 200
+        if regen_flag:
+            vehicle_only = bool(self.find_argument('vehicle_only', default=True))
+            speed_limit = int(self.find_argument('speed_limit', default=25))
+            status_code, reason = CreateSpeedDistributionHandler.handler(identifier, speed_limit, vehicle_only)
         if status_code == 200:
+            image_path = os.path.join(\
+                                    get_project_path(identifier),\
+                                    'final_images',\
+                                    'velocityPDF.jpg')
+            self.set_header('Content-Disposition',\
+                            'attachment; filename=velocityPDF.jpg')
+            self.set_header('Content-Type', 'application/octet-stream')
+            self.set_header('Content-Description', 'File Transfer')
+            self.write_file_stream(image_path)
             self.finish("Create Speed Distribution")
         else:
-            raise tornado.web.HTTPError(reason=reason, status_code=status_code)
+            self.error_message = reason
+            raise tornado.web.HTTPError(status_code=status_code)
 
     @staticmethod
     def handler(identifier, speed_limit, vehicle_only):
