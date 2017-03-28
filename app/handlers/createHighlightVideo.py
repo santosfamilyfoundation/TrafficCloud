@@ -30,7 +30,6 @@ class CreateHighlightVideoHandler(BaseHandler):
 
     @apiError error_message The error message to display.
     """
-
     def prepare(self):
         self.identifier = self.find_argument('identifier')
         status_dict = StatusHelper.get_status(self.identifier)
@@ -44,6 +43,15 @@ class CreateHighlightVideoHandler(BaseHandler):
             raise tornado.web.HTTPError(status_code = status_code)
         StatusHelper.set_status(self.identifier, Status.Type.HIGHLIGHT_VIDEO, Status.Flag.IN_PROGRESS)
 
+    def get(self):
+        status = StatusHelper.get_status(self.identifier)
+        project_path = get_project_path(self.identifier)
+        file_name = os.path.join(project_path, 'final_videos', 'highlight.mp4')
+        self.set_header('Content-Disposition', 'attachment; filename=highlight.mp4')
+        self.set_header('Content-Type', 'application/octet-stream')
+        self.set_header('Content-Description', 'File Transfer')
+        self.write_file_stream(file_name)
+        self.finish()
 
     def post(self):
         email = self.find_argument('email')
