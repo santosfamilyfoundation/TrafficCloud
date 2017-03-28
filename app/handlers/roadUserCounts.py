@@ -11,24 +11,34 @@ from baseHandler import BaseHandler
 #TODO(rlouie): replace with SantosBaseHandler class pip makes
 class RoadUserCountsHandler(BaseHandler):
     """
-    @api {post} /roadUserCounts/ Road User Counts
+    @api {GET} /roadUserCounts/ Road User Counts
     @apiName RoadUserCounts
     @apiVersion 0.1.0
     @apiGroup Results
-    @apiDescription Calling this route will create a road user counts image from a specified project. When the image is created, an email will be sent to the project's user. This route requires running object tracking on the video, and then running safety analysis on the results of the object tracking beforehand. (Due to the potentially long duration, it is infeasible to return the results as a response to the HTTP request. In order to check the status of the testing and view results, see the Status group of messages.)
+    @apiDescription Calling this route will create a road user counts image from a specified project. The image will then be sent back in the response body. This route requires running object tracking on the video, and then running safety analysis on the results of the object tracking beforehand.
 
     @apiParam {String} identifier The identifier of the project to create road user counts for.
+    @apiParam {Boolean} regenerate A boolean identifying whether the user counts image should be recreated.
 
     @apiSuccess status_code The API will return a status code of 200 upon success.
 
     @apiError error_message The error message to display.
     """
-    def post(self):
+    def get(self):
         identifier = self.find_argument('identifier')
-        status_code, reason = RoadUserCountsHandler.handler(identifier)
-        print status_code
-        print reason
+        regen_flag = self.find_argument('regenerate')
+        if regen_flag:
+            status_code, reason = RoadUserCountsHandler.handler(identifier)
         if status_code == 200:
+            image_path = os.path.join(\
+                                    get_project_path(identifier),\
+                                    'final_images',\
+                                    'road_user_icon_counts.jpg')
+            self.set_header('Content-Disposition',\
+                            'attachment; filename=road_user_icon_counts.jpg')
+            self.set_header('Content-Type', 'application/octet-stream')
+            self.set_header('Content-Description', 'File Transfer')
+            self.write_file_stream(image_path)
             self.finish("Visualize Road User Counts")
         else:
             self.error_message = reason
