@@ -22,22 +22,22 @@ class MakeReportHandler(BaseHandler):
     """
     def get(self):
         identifier = self.find_argument('identifier')
+        project_dir = get_project_path(identifier)
         status_code, reason = MakeReportHandler.handler(identifier)
-        if (not os.path.exists(os.path.join(\
+        if (not os.path.exists(os.path.join(project_dir,\
                                             'final_images',\
                                             'road_user_icon_counts.jpg'))):
             self.error_message = 'Road User Counts must be run before the report can be generated.'
-            raise tornado.web.HTTPError(status_code=status_code)
+            raise tornado.web.HTTPError(status_code=400)
 
-        if (not os.path.exists(os.path.join(\
+        if (not os.path.exists(os.path.join(project_dir,\
                                             'final_images',\
                                             'velocityPDF.jpg'))):
             self.error_message = 'Speed Distribution must be run before the report can be generated.'
-            raise tornado.web.HTTPError(status_code=status_code)
+            raise tornado.web.HTTPError(status_code=400)
 
         if status_code == 200:
-            report_path = os.path.join(\
-                                    get_project_path(identifier),\
+            report_path = os.path.join(project_dir,\
                                     'santosreport.pdf')
             self.set_header('Content-Disposition',\
                             'attachment; filename=santosreport.pdf')
