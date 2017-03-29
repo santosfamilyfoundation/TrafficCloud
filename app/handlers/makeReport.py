@@ -24,13 +24,13 @@ class MakeReportHandler(BaseHandler):
         identifier = self.find_argument('identifier')
         status_code, reason = MakeReportHandler.handler(identifier)
         if (not os.path.exists(os.path.join(\
-                                            final_images,\
+                                            'final_images',\
                                             'road_user_icon_counts.jpg'))):
             self.error_message = 'Road User Counts must be run before the report can be generated.'
             raise tornado.web.HTTPError(status_code=status_code)
 
         if (not os.path.exists(os.path.join(\
-                                            final_images,\
+                                            'final_images',\
                                             'velocityPDF.jpg'))):
             self.error_message = 'Speed Distribution must be run before the report can be generated.'
             raise tornado.web.HTTPError(status_code=status_code)
