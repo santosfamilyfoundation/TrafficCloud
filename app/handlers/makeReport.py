@@ -16,25 +16,25 @@ class MakeReportHandler(BaseHandler):
     @apiDescription Calling this route will create a safety report for a specified project. When the report is created, an email will be sent to the project's user. This route requires running object tracking on the video, and then running safety analysis on the results of the object tracking beforehand. (Due to the potentially long duration, it is infeasible to return the results as a response to the HTTP request. In order to check the status of the testing and view results, see the Status group of messages.)
 
     @apiParam {String} identifier The identifier of the project for which to create the report.
-    @apiParam {Boolean} [regenerate] A boolean identifying whether the user counts image should be recreated.
-    @apiParam {Integer} [speed_limit] speed limit of the intersection. Defaults to 25 mph.
-    @apiParam {Boolean} [vehicle_only] Flag for specifying only vehicle speeds
     @apiSuccess status_code The API will return a status code of 200 upon success.
 
     @apiError error_message The error message to display.
     """
     def get(self):
         identifier = self.find_argument('identifier')
-        regen_flag = bool(self.find_argument('regenerate', default=False))
-        status_code = 200
-        if regen_flag:
-            vehicle_only = bool(self.find_argument('vehicle_only', default=True))
-            speed_limit = int(self.find_argument('speed_limit', default=25))
-            status_code, reason = CreateSpeedDistributionHandler.handler(identifier, speed_limit, vehicle_only)
-            if status_code==200:
-                status_code, reason = RoadUserCountsHandler.handler(identifier)
-            if status_code==200:
-                status_code, reason = MakeReportHandler.handler(identifier)
+        status_code, reason = MakeReportHandler.handler(identifier)
+        if (not os.path.exists(os.path.join(\
+                                            final_images,\
+                                            'road_user_icon_counts.jpg'))):
+            self.error_message = 'Road User Counts must be run before the report can be generated.'
+            raise tornado.web.HTTPError(status_code=status_code)
+
+        if (not os.path.exists(os.path.join(\
+                                            final_images,\
+                                            'velocityPDF.jpg'))):
+            self.error_message = 'Speed Distribution must be run before the report can be generated.'
+            raise tornado.web.HTTPError(status_code=status_code)
+
         if status_code == 200:
             report_path = os.path.join(\
                                     get_project_path(identifier),\

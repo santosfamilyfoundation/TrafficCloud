@@ -18,7 +18,6 @@ class RoadUserCountsHandler(BaseHandler):
     @apiDescription Calling this route will create a road user counts image from a specified project. The image will then be sent back in the response body. This route requires running object tracking on the video, and then running safety analysis on the results of the object tracking beforehand.
 
     @apiParam {String} identifier The identifier of the project to create road user counts for.
-    @apiParam {Boolean} [regenerate] A boolean identifying whether the user counts image should be recreated.
 
     @apiSuccess status_code The API will return a status code of 200 upon success.
 
@@ -26,10 +25,7 @@ class RoadUserCountsHandler(BaseHandler):
     """
     def get(self):
         identifier = self.find_argument('identifier')
-        regen_flag = bool(self.find_argument('regenerate', default=False))
-        status_code = 200
-        if regen_flag:
-            status_code, reason = RoadUserCountsHandler.handler(identifier)
+        status_code, reason = RoadUserCountsHandler.handler(identifier)
         if status_code == 200:
             image_path = os.path.join(\
                                     get_project_path(identifier),\

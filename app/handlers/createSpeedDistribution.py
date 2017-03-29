@@ -18,7 +18,6 @@ class CreateSpeedDistributionHandler(BaseHandler):
     @apiGroup Results
     @apiDescription Calling this route will create a graph of the speed distribution from a specified project.
     @apiParam {String} identifier The identifier of the project to create a speed distribution for.
-    @apiParam {Boolean} [regenerate] A boolean identifying whether the distribution image should be recreated.
     @apiParam {Integer} [speed_limit] speed limit of the intersection. Defaults to 25 mph.
     @apiParam {Boolean} [vehicle_only] Flag for specifying only vehicle speeds
 
@@ -28,12 +27,9 @@ class CreateSpeedDistributionHandler(BaseHandler):
     """
     def get(self):
         identifier = self.find_argument('identifier')
-        regen_flag = bool(self.find_argument('regenerate', default=False))
-        status_code = 200
-        if regen_flag:
-            vehicle_only = bool(self.find_argument('vehicle_only', default=True))
-            speed_limit = int(self.find_argument('speed_limit', default=25))
-            status_code, reason = CreateSpeedDistributionHandler.handler(identifier, speed_limit, vehicle_only)
+        vehicle_only = bool(self.find_argument('vehicle_only', default=True))
+        speed_limit = int(self.find_argument('speed_limit', default=25))
+        status_code, reason = CreateSpeedDistributionHandler.handler(identifier, speed_limit, vehicle_only)
         if status_code == 200:
             image_path = os.path.join(\
                                     get_project_path(identifier),\
