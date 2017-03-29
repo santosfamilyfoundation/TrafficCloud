@@ -11,14 +11,14 @@ from baseHandler import BaseHandler
 #TODO(rlouie): replace with SantosBaseHandler class pip makes
 class RoadUserCountsHandler(BaseHandler):
     """
-    @api {GET} /roadUserCounts/ Road User Counts
+    @api {get} /roadUserCounts/ Road User Counts
     @apiName RoadUserCounts
     @apiVersion 0.1.0
     @apiGroup Results
     @apiDescription Calling this route will create a road user counts image from a specified project. The image will then be sent back in the response body. This route requires running object tracking on the video, and then running safety analysis on the results of the object tracking beforehand.
 
     @apiParam {String} identifier The identifier of the project to create road user counts for.
-    @apiParam {Boolean} regenerate A boolean identifying whether the user counts image should be recreated.
+    @apiParam {Boolean} [regenerate] A boolean identifying whether the user counts image should be recreated.
 
     @apiSuccess status_code The API will return a status code of 200 upon success.
 

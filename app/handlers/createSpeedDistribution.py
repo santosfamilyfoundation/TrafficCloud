@@ -12,16 +12,15 @@ import traceback
 
 class CreateSpeedDistributionHandler(BaseHandler):
     """
-    @api {GET} /speedDistribution/ Speed Distribution
+    @api {get} /speedDistribution/ Speed Distribution
     @apiName SpeedDistribution
     @apiVersion 0.1.0
     @apiGroup Results
     @apiDescription Calling this route will create a graph of the speed distribution from a specified project.
-
     @apiParam {String} identifier The identifier of the project to create a speed distribution for.
+    @apiParam {Boolean} [regenerate] A boolean identifying whether the distribution image should be recreated.
     @apiParam {Integer} [speed_limit] speed limit of the intersection. Defaults to 25 mph.
     @apiParam {Boolean} [vehicle_only] Flag for specifying only vehicle speeds
-    @apiParam {Boolean} regenerate A boolean identifying whether the distribution image should be recreated.
 
     @apiSuccess status_code The API will return a status code of 200 upon success.
 
