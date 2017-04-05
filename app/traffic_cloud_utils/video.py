@@ -124,7 +124,7 @@ def create_trajectory_video(video_path, db_filename, homography_path, output_pat
     framerate = get_framerate(video_path)
 
     print('Loading objects, please wait...')
-    objects = loadTrajectoriesFromSqlite(db_filename, video_type, objects_to_label, withFeatures=bounding_boxes)
+    objects = loadTrajectoriesFromSqlite(db_filename, video_type, objectNumbers = objects_to_label, withFeatures=bounding_boxes)
     homography = inv(loadtxt(homography_path))
 
     ret = True
