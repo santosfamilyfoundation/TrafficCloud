@@ -24,7 +24,7 @@ class RetrieveResultsHandler(BaseHandler):
     """
 
     def get(self):
-        identifier = self.get_body_argument('identifier')
+        identifier = self.find_argument('identifier')
         project_path = get_project_path(identifier)
         file_videos = os.path.join(project_path, 'final_videos')
         file_images = os.path.join(project_path, 'final_images')

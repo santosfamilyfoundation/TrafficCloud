@@ -41,7 +41,7 @@ def create_highlight_video(project_path, video_path, list_of_near_misses):
     delete_files(videos_folder, excluded_files=[tracking_filename])
 
     for i, near_miss in enumerate(list_of_near_misses):
-        start_frame, end_frame, object_id1, object_id2, ttc = near_miss
+        start_frame, end_frame, object_id1, object_id2 = near_miss
 
         # Create a short video snippet of the near miss interaction
         snippet_number = 2*i + 1
@@ -145,13 +145,13 @@ def get_resolution(videopath):
 
 #### Video Creation
 
-def create_video_from_images(images_dir, prefix, video_dir, video_filename, framerate, extension="png"):
+def create_video_from_images(images_dir, prefix, video_dir, video_filename, framerate, frame1=0, extension="png"):
     '''
     Creates a video for images that are of the form prefix+number+.extension
     '''
     if not os.path.exists(video_dir):
         os.mkdir(video_dir)
-    renumber_frames(images_dir, 0, prefix, extension)
+    renumber_frames(images_dir, frame1, prefix, extension)
     convert_frames_to_video(framerate, images_dir, video_dir, prefix, video_filename, 1.0)
 
 def create_video_snippet(project_path, video_path, videos_folder, file_prefix, video_number, start_frame, end_frame, pts_multiplier=1.0, interacting_objects=None):
@@ -187,6 +187,7 @@ def create_video_snippet(project_path, video_path, videos_folder, file_prefix, v
 
 def create_video_from_image(folder, image_filename, video_filename, duration):
     subprocess.call(["ffmpeg",
+        "-y",
         "-loop", "1",
         "-i", os.path.join(folder, image_filename),
         "-c:v", "libx264",
@@ -201,6 +202,7 @@ def combine_videos(videos_folder, temp_video_prefix, filename):
     # Using Popen seems to be necessary in order to pipe the output of one into the other
     p1 = subprocess.Popen(['cat']+get_list_of_files(videos_folder, temp_video_prefix, "mpg"), stdout=subprocess.PIPE)
     p2 = subprocess.Popen(['ffmpeg',
+        '-y',
         '-f', 'mpeg',
         '-i', '-',
         '-qscale', '0',
@@ -227,14 +229,16 @@ def renumber_frames(folder, start_frame, prefix, extension):
                 e = s[1]
                 if e == extension:
                     number = rest.split('.')[0]
+                    num = None
                     try:
-                        num = int(number) - start_frame
-                    except:
+                        num = int(number) - int(start_frame)
+                    except Exception as e:
                         print("Couldn't parse to int: "+file+" from prefix: "+prefix)
-                    if num < 0:
-                        raise Exception()
-                    new_file = prefix+str(num)+'.'+extension
-                    os.rename(os.path.join(folder, file), os.path.join(temp_folder, new_file))
+                        print("Value of number was: " + number+" of type: "+str(type(number)))
+                        print("Exception was:" + str(e))
+                    if num is not None and num >= 0:
+                        new_file = prefix+str(num)+'.'+extension
+                        os.rename(os.path.join(folder, file), os.path.join(temp_folder, new_file))
 
     # Rename the 'new-image-x' to 'image-x'
     for file in os.listdir(temp_folder):
@@ -244,6 +248,7 @@ def renumber_frames(folder, start_frame, prefix, extension):
 
 def convert_frames_to_video(framerate, images_folder, videos_folder, images_prefix, filename, pts_multiplier):
     subprocess.call(["ffmpeg",
+        "-y",
         "-framerate", framerate,
         "-i", os.path.join(images_folder, images_prefix+"%d.png"),
         "-filter:v", "setpts={:0.1f}*PTS".format(pts_multiplier),

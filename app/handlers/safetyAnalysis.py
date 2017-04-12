@@ -28,7 +28,7 @@ class SafetyAnalysisHandler(BaseHandler):
     """
 
     def prepare(self):
-        self.identifier = self.get_body_argument("identifier")
+        self.identifier = self.find_argument('identifier')
         status_dict = StatusHelper.get_status(self.identifier)
         if status_dict[Status.Type.SAFETY_ANALYSIS] == Status.Flag.IN_PROGRESS:
             status_code = 423
@@ -41,7 +41,7 @@ class SafetyAnalysisHandler(BaseHandler):
         StatusHelper.set_status(self.identifier, Status.Type.SAFETY_ANALYSIS, Status.Flag.IN_PROGRESS)
 
     def post(self):
-        email = self.get_body_argument("email", default = None)
+        email = self.find_argument("email", default = None)
         status_code, reason = SafetyAnalysisHandler.handler(self.identifier, email, SafetyAnalysisHandler.callback)
 
         if status_code == 200:
@@ -100,7 +100,7 @@ class SafetyAnalysisThread(threading.Thread):
         try:
             print "Running safety analysis. Please wait as this may take a while."
 
-            subprocess.check_output(["safety-analysis.py", "--cfg", config_path, "--prediction-method", self.prediction_method])
+            subprocess.check_call(["safety-analysis.py", "--cfg", config_path, "--prediction-method", self.prediction_method])
         except subprocess.CalledProcessError as err_msg:
             StatusHelper.set_status(self.identifier, Status.Type.SAFETY_ANALYSIS, Status.Flag.FAILURE)
             return self.callback(500, err_msg.output, self.identifier, self.email)

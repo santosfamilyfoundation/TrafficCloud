@@ -28,13 +28,13 @@ class AnalysisHandler(BaseHandler):
     @apiError error_message The error message to display.
     """
     def prepare(self):
-        self.identifier = self.get_body_argument("identifier")
+        self.identifier = self.find_argument('identifier')
         status_dict = StatusHelper.get_status(self.identifier)
         if status_dict[Status.Type.OBJECT_TRACKING] == Status.Flag.IN_PROGRESS or status_dict[Status.Type.SAFETY_ANALYSIS] == Status.Flag.IN_PROGRESS:
             status_code = 423
             self.error_message = "Currently analyzing your video. Please wait."
             raise tornado.web.HTTPError(status_code = status_code)
-        if status_dict[Status.Type.CONFIG_HOMOGRAPHY] != Status.Flag.COMPLETE:
+        if status_dict[Status.Type.HOMOGRAPHY] != Status.Flag.COMPLETE:
             status_code = 412
             self.error_message = "Uploading homography did not complete successfully, try re-running it."
             raise tornaod.web.HTTPError(status_code = status_code)
@@ -42,7 +42,7 @@ class AnalysisHandler(BaseHandler):
         StatusHelper.set_status(self.identifier, Status.Type.SAFETY_ANALYSIS, Status.Flag.IN_PROGRESS)
 
     def post(self):
-        email = self.get_body_argument("email", default = None)
+        email = self.find_argument("email")
         status_code, reason = AnalysisHandler.handler(self.identifier, email)
 
         if status_code == 200:
@@ -55,7 +55,8 @@ class AnalysisHandler(BaseHandler):
     def handler(identifier, email):
         project_path = get_project_path(identifier)
         if not os.path.exists(project_path):
-           return (500, 'Project directory does not exist. Check your identifier?')
+            StatusHelper.set_status(identifier, Status.Type.OBJECT_TRACKING, Status.Flag.FAILURE)
+            return (500, 'Project directory does not exist. Check your identifier?')
 
         status_code, reason = ObjectTrackingHandler.handler(identifier, email, AnalysisHandler.object_tracking_callback)
         return (status_code, reason)
@@ -63,6 +64,7 @@ class AnalysisHandler(BaseHandler):
     @staticmethod
     def object_tracking_callback(status_code, response_message, identifier, email):
         if status_code == 200:
+            StatusHelper.set_status(identifier, Status.Type.SAFETY_ANALYSIS, Status.Flag.IN_PROGRESS)
             message = "Hello,\n\tWe have finished processing your video and identifying all objects.\nWe will perform safety analysis now.\nThank you for your patience,\nThe Santos Team"
             subject = "Your video has finished processing."
 

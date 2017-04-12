@@ -27,9 +27,9 @@ class CreateSpeedDistributionHandler(BaseHandler):
     @apiError error_message The error message to display.
     """
     def post(self):
-        identifier = self.get_body_argument('identifier')
-        speed_limit = int(self.get_body_argument('speed_limit', default=25))
-        vehicle_only = bool(self.get_body_argument('vehicle_only', default=True))
+        identifier = self.find_argument('identifier')
+        speed_limit = int(self.find_argument('speed_limit', default=25))
+        vehicle_only = bool(self.find_argument('vehicle_only', default=True))
         status_code, reason = CreateSpeedDistributionHandler.handler(identifier, speed_limit, vehicle_only)
         if status_code == 200:
             self.finish("Create Speed Distribution")

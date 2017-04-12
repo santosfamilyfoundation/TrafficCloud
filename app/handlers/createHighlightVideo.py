@@ -32,7 +32,7 @@ class CreateHighlightVideoHandler(BaseHandler):
     """
 
     def prepare(self):
-        self.identifier = self.get_body_argument("identifier")
+        self.identifier = self.find_argument('identifier')
         status_dict = StatusHelper.get_status(self.identifier)
         if status_dict[Status.Type.HIGHLIGHT_VIDEO] == Status.Flag.IN_PROGRESS:
             status_code = 423
@@ -46,10 +46,10 @@ class CreateHighlightVideoHandler(BaseHandler):
 
 
     def post(self):
-        email = self.get_body_argument('email', default=None)
-        ttc_threshold = float(self.get_body_argument('ttc_threshold', default=1.5))
-        vehicle_only = bool(self.get_body_argument('vehicle_only', default=True))
-        num_near_misses_to_use = int(self.get_body_argument('num_near_misses_to_use', default=10))
+        email = self.find_argument('email')
+        ttc_threshold = float(self.find_argument('ttc_threshold', default=1.5))
+        vehicle_only = bool(self.find_argument('vehicle_only', default=True))
+        num_near_misses_to_use = int(self.find_argument('num_near_misses_to_use', default=10))
         status_code, reason = CreateHighlightVideoHandler.handler(self.identifier, email, ttc_threshold, vehicle_only, num_near_misses_to_use)
         if status_code == 200:
             self.finish("Create Highlight Video")

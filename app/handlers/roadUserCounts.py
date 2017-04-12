@@ -24,7 +24,7 @@ class RoadUserCountsHandler(BaseHandler):
     @apiError error_message The error message to display.
     """
     def post(self):
-        identifier = self.get_body_argument('identifier')
+        identifier = self.find_argument('identifier')
         status_code, reason = RoadUserCountsHandler.handler(identifier)
         print status_code
         print reason

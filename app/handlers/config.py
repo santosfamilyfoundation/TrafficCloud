@@ -2,9 +2,10 @@
 
 import tornado.web
 
+from baseHandler import BaseHandler
 from traffic_cloud_utils.pm import default_config_dict, update_project_config
 
-class ConfigHandler(tornado.web.RequestHandler):
+class ConfigHandler(BaseHandler):
     """
     @api {post} /config/ Configure Project
     @apiName Configure Project
@@ -27,13 +28,13 @@ class ConfigHandler(tornado.web.RequestHandler):
     @apiError error_message The error message to display.
     """
     def post(self):
-        identifier = self.get_body_argument("identifier")
+        identifier = self.find_argument("identifier")
 
         config_keys = default_config_dict().keys()
         config_dict = {}
 
         for key in config_keys:
-            arg = self.get_body_argument(key, default=None)
+            arg = self.find_argument(key)
             if arg != None:
                 config_dict[key] = arg
 

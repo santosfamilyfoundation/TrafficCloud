@@ -21,7 +21,7 @@ import cleanup
 # Upload routes
 from handlers.upload import UploadHandler
 from handlers.uploadVideo import UploadVideoHandler
-from handlers.configHomography import ConfigHomographyHandler
+from handlers.homography import HomographyHandler
 
 # Configure routes
 from handlers.config import ConfigHandler
@@ -44,8 +44,11 @@ from handlers.createSpeedDistribution import CreateSpeedDistributionHandler
 from handlers.retrieveResults import RetrieveResultsHandler
 from handlers.createHighlightVideo import CreateHighlightVideoHandler
 
-define("port", default=8888, help="run on the given port", type=int)
 
+MB = 1024*1024
+define("port", default=8888, help="run on the given port", type=int)
+define("max_body_size", default=100*MB, help="max size of content body", type=int)
+define("max_buffer_size", default=100*MB, help="max size loaded into memory", type=int)
 
 class Application(tornado.web.Application):
     def __init__(self):
@@ -53,7 +56,7 @@ class Application(tornado.web.Application):
             (r"/", MainHandler),
             (r"/upload", UploadHandler),
             (r"/uploadVideo", UploadVideoHandler),
-            (r"/configHomography", ConfigHomographyHandler),
+            (r"/homography", HomographyHandler),
             (r"/config", ConfigHandler),
             (r"/testConfig", TestConfigHandler),
             (r"/defaultConfig", DefaultConfigHandler),
@@ -92,12 +95,14 @@ def main():
     if os.environ.get('SANTOSCLOUD_EMAIL') == '' or os.environ.get('SANTOSCLOUD_EMAIL_PASSWORD') == '':
         print("WARNING: Running without email capabilities. Users won't be emailed when their processing completes. To fix this, set the SANTOSCLOUD_EMAIL and SANTOSCLOUD_EMAIL_PASSWORD environment variables.")
 
-    if not os.path.exists(os.path.join(os.path.dirname(__file__),'..','.temp')):
-        os.mkdir(os.path.join(os.path.dirname(__file__),'..','.temp'))
     tornado.options.parse_command_line()
     app = Application()
-    app.listen(options.port, max_buffer_size = (int)(1024*1024*1024*1.25))
+    app.listen(options.port,\
+               max_body_size = options.max_body_size,\
+               max_buffer_size = options.max_buffer_size)
     print('Listening on port '+str(options.port))
+    print('Max Body Size {} MB'.format(options.max_body_size/(MB)))
+    print('Max Buffer Size {} MB'.format(options.max_buffer_size/(MB)))
     ioloop = tornado.ioloop.IOLoop().instance()
     tornado.autoreload.start(ioloop)
     ioloop.start()

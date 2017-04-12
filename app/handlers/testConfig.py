@@ -15,8 +15,8 @@ from traffic_cloud_utils import video
 
 class TestConfigHandler(BaseHandler):
     """
-    @api {post} /testConfig/ Test Configuration
-    @apiName TestConfig
+    @api {post} /testConfig/ Post Test Configuration
+    @apiName PostTestConfig
     @apiVersion 0.1.0
     @apiGroup Configuration
     @apiDescription Calling this route will test the video's configuration. This test consists of running object tracking on a small subset of the video, and producing a video showing the results of the tracking. (Due to the potentially long duration of testing, it is infeasible to return the results as a response to the HTTP request. In order to check the status of the testing and view results, see the Status group of messages.)
@@ -31,13 +31,28 @@ class TestConfigHandler(BaseHandler):
     @apiError error_message The error message to display.
     """
 
+    """
+    @api {get} /testConfig/ Get Test Configuration
+    @apiName GetTestConfig
+    @apiVersion 0.1.0
+    @apiGroup Configuration
+    @apiDescription Calling this route will return the video created by testing the video's configuration.
+
+    @apiParam {String} test_flag Flag to determine whether feature tracking or object tracking will be tested.
+    @apiParam {String} identifier The identifier of the project to test configuration of.
+
+    @apiSuccess file The API will return the generated test video as a video file.
+
+    @apiError error_message The error message to display.
+    """
+
     def prepare(self):
-        self.identifier = self.get_body_argument("identifier")
-        self.test_flag = self.get_body_argument("test_flag")
+        self.identifier = self.find_argument('identifier')
+        self.test_flag = self.find_argument('test_flag')
         status_dict = StatusHelper.get_status(self.identifier)
         if self.test_flag == "feature":
             status_type = Status.Type.FEATURE_TEST
-            if status_dict[Status.Type.CONFIG_HOMOGRAPHY] != Status.Flag.COMPLETE:
+            if status_dict[Status.Type.HOMOGRAPHY] != Status.Flag.COMPLETE:
                 self.error_message = "Uploading homography did not complete successfully, try re-running it."
                 status_code = 412
                 raise tornado.web.HTTPError(status_code = status_code)
@@ -52,10 +67,10 @@ class TestConfigHandler(BaseHandler):
             self.error_message = "Currently running a test. Please wait."
             raise tornado.web.HTTPError(status_code = status_code)
 
-        request_type = self.request.method
-        if request_type == 'POST':
+        request_type = self.request.method.lower()
+        if request_type == 'post':
             StatusHelper.set_status(self.identifier, status_type, Status.Flag.IN_PROGRESS)
-        elif request_type == 'GET':
+        elif request_type == 'get':
             if self.test_flag == "feature":
                 if status_dict[Status.Type.FEATURE_TEST] != Status.Flag.COMPLETE:
                     status_code = 500
@@ -68,8 +83,8 @@ class TestConfigHandler(BaseHandler):
                     raise tornado.web.HTTPError(status_code = status_code)
 
     def post(self):
-        frame_start = int(self.get_body_argument("frame_start", default = 0))
-        num_frames = int(self.get_body_argument("num_frames", default = 120))
+        frame_start = int(self.find_argument("frame_start", default = 0))
+        num_frames = int(self.find_argument("num_frames", default = 120))
         if num_frames > 200:
             num_frames = 200
 
@@ -86,12 +101,12 @@ class TestConfigHandler(BaseHandler):
         project_path = get_project_path(self.identifier)
         if self.test_flag == "feature":
             self.file_name = os.path.join(project_path, 'feature_video', 'feature_video.mp4')
+            self.set_header('Content-Disposition', 'attachment; filename=feature_video.mp4')
         elif self.test_flag == "object":
             self.file_name = os.path.join(project_path, 'object_video', 'object_video.mp4')
-
+            self.set_header('Content-Disposition', 'attachment; filename=object_video.mp4')
         self.set_header('Content-Type', 'application/octet-stream')
         self.set_header('Content-Description', 'File Transfer')
-        self.set_header('Content-Disposition', 'attachment; filename=' + self.file_name)
         self.write_file_stream(self.file_name)
         self.finish()
 
@@ -162,9 +177,13 @@ class TestConfigFeatureThread(threading.Thread):
         if not os.path.exists(images_folder):
             os.mkdir(images_folder)
 
+        fbt_call = ["feature-based-tracking", tracking_path, "--tf", "--database-filename", db_path]
+        mask_filename = os.path.join(get_project_path(self.identifier), "mask.jpg")
+        if os.path.exists(mask_filename):
+            fbt_call.extend(["--mask-filename", mask_filename])
         try:
-            subprocess.check_output(["feature-based-tracking", tracking_path, "--tf", "--database-filename", db_path])
-            subprocess.check_output(["display-trajectories.py", "-i", get_project_video_path(self.identifier), "-d", db_path, "-o", project_path + "/homography/homography.txt", "-t", "feature", "--save-images", "-f", str(self.frame_start), "--last-frame", str(self.frame_start + self.num_frames), "--output-directory", images_folder])
+            subprocess.check_call(fbt_call)
+            subprocess.check_call(["display-trajectories.py", "-i", get_project_video_path(self.identifier), "-d", db_path, "-o", project_path + "/homography/homography.txt", "-t", "feature", "--save-images", "-f", str(self.frame_start), "--last-frame", str(self.frame_start + self.num_frames), "--output-directory", images_folder])
         except subprocess.CalledProcessError as err_msg:
             StatusHelper.set_status(self.identifier, Status.Type.FEATURE_TEST, Status.Flag.FAILURE)
             return self.callback(500, err_msg.output, self.identifier)
@@ -174,7 +193,7 @@ class TestConfigFeatureThread(threading.Thread):
         temp_image_prefix = 'image-'
         if os.path.exists(os.path.join(videos_folder, video_filename)):
             os.remove(os.path.join(videos_folder, video_filename))
-        video.create_video_from_images(images_folder, temp_image_prefix, videos_folder, video_filename, video.get_framerate(get_project_video_path(self.identifier)))
+        video.create_video_from_images(images_folder, temp_image_prefix, videos_folder, video_filename, video.get_framerate(get_project_video_path(self.identifier)), self.frame_start)
 
         video.delete_files(images_folder)
         os.rmdir(images_folder)
@@ -214,9 +233,9 @@ class TestConfigObjectThread(threading.Thread):
             os.mkdir(images_folder)
 
         try:
-            subprocess.check_output(["feature-based-tracking",tracking_path,"--gf","--database-filename",obj_db_path])
-            subprocess.check_output(["classify-objects.py", "--cfg", tracking_path, "-d", obj_db_path])  # Classify road users
-            subprocess.check_output(["display-trajectories.py", "-i", get_project_video_path(self.identifier),"-d", obj_db_path, "-o", project_path + "/homography/homography.txt", "-t", "object", "--save-images", "-f", str(self.frame_start), "--last-frame", str(self.frame_start + self.num_frames), "--output-directory", images_folder])
+            subprocess.check_call(["feature-based-tracking",tracking_path,"--gf","--database-filename",obj_db_path])
+            subprocess.check_call(["classify-objects.py", "--cfg", tracking_path, "-d", obj_db_path])  # Classify road users
+            subprocess.check_call(["display-trajectories.py", "-i", get_project_video_path(self.identifier),"-d", obj_db_path, "-o", project_path + "/homography/homography.txt", "-t", "object", "--save-images", "-f", str(self.frame_start), "--last-frame", str(self.frame_start + self.num_frames), "--output-directory", images_folder])
         except subprocess.CalledProcessError as err_msg:
             StatusHelper.set_status(self.identifier, Status.Type.OBJECT_TEST, Status.Flag.FAILURE)
             return self.callback(500, err_msg.output, self.identifier)
@@ -224,7 +243,7 @@ class TestConfigObjectThread(threading.Thread):
         videos_folder = os.path.join(get_project_path(self.identifier), "object_video")
         video_filename = "object_video.mp4"
         temp_image_prefix = 'image-'
-        video.create_video_from_images(images_folder, temp_image_prefix, videos_folder, video_filename, video.get_framerate(get_project_video_path(self.identifier)))
+        video.create_video_from_images(images_folder, temp_image_prefix, videos_folder, video_filename, video.get_framerate(get_project_video_path(self.identifier)), self.frame_start)
 
         video.delete_files(images_folder)
         os.rmdir(images_folder)

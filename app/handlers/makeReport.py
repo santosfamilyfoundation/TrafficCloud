@@ -22,7 +22,7 @@ class MakeReportHandler(BaseHandler):
     @apiError error_message The error message to display.
     """
     def post(self):
-        identifier = self.get_body_argument('identifier')
+        identifier = self.find_argument('identifier')
         status_code, reason = MakeReportHandler.handler(identifier)
         if status_code == 200:
             self.finish("Make PDF Report")

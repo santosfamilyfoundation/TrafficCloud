@@ -20,12 +20,12 @@ from app_config import get_project_path, get_project_config_path, config_section
 from video import get_framerate
 from statusHelper import StatusHelper
 
-def create_project(identifier, video_dict):
+def create_project(identifier, video_part):
     config_dict = {}
 
     _update_config_dict_with_defaults(config_dict)
     _translate_config_dict(config_dict)
-    _create_project_dir(identifier, config_dict, video_dict)
+    _create_project_dir(identifier, config_dict, video_part)
     StatusHelper.initalize_project(identifier) # This must be called after the config path has been created
 
 def update_homography(identifier, homography_path, unitpixelratio):
@@ -78,7 +78,7 @@ def _update_config_dict_with_defaults(config_dict):
         if key not in config_dict.keys():
             config_dict[key] = value
 
-def _create_project_dir(identifier, config_dict, video_dict):
+def _create_project_dir(identifier, config_dict, video_part):
     test_object_dir = os.path.join(".temp", "test", "test_object")
     test_feature_dir = os.path.join(".temp", "test", "test_feature")
 
@@ -90,10 +90,9 @@ def _create_project_dir(identifier, config_dict, video_dict):
         for new_dir in directory_names:
             os.makedirs(os.path.join(project_path, new_dir))
 
-        with open(os.path.join(project_path,video_dict['filename']), 'wb') as v:
-            v.write(video_dict['body'])
+        video_part.move(os.path.join(project_path, video_part.get_filename()))
 
-        _write_to_project_config(identifier, video_dict['filename'])
+        _write_to_project_config(identifier, video_part.get_filename())
 
         default_files_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "default")
 

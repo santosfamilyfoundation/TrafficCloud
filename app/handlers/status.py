@@ -7,7 +7,7 @@ from baseHandler import BaseHandler
 class StatusHandler(BaseHandler):
 
     """
-    @api {post} /status/ Processing Status
+    @api {get} /status/ Processing Status
     @apiName ProcessingStatus
     @apiVersion 0.1.0
     @apiGroup Status
@@ -23,8 +23,8 @@ class StatusHandler(BaseHandler):
 
     @apiError error_message The error message to display. (Will return unique error message if object tracking has NOT been run on specified project)
     """
-    def post(self):
-        identifier = self.get_body_argument('identifier')
+    def get(self):
+        identifier = self.find_argument('identifier')
         status_dict = StatusHelper.get_status_raw(identifier)
         if status_dict != None:
         	self.write(status_dict)

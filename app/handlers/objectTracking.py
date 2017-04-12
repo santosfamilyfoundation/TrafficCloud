@@ -33,13 +33,13 @@ class ObjectTrackingHandler(BaseHandler):
     """
 
     def prepare(self):
-        self.identifier = self.get_body_argument("identifier")
+        self.identifier = self.find_argument('identifier')
         status_dict = StatusHelper.get_status(self.identifier)
         if status_dict[Status.Type.OBJECT_TRACKING] == Status.Flag.IN_PROGRESS:
             status_code = 423
             self.error_message = "Currently analyzing your video. Please wait."
             raise tornado.web.HTTPError(status_code = status_code)
-        if status_dict[Status.Type.CONFIG_HOMOGRAPHY] != Status.Flag.COMPLETE:
+        if status_dict[Status.Type.HOMOGRAPHY] != Status.Flag.COMPLETE:
             status_code = 412
             self.error_message = "Uploading homography did not complete successfully, try re-running it."
             raise tornado.web.HTTPError(status_code = status_code)
@@ -48,7 +48,7 @@ class ObjectTrackingHandler(BaseHandler):
 
     def post(self):
         # TODO: Implement rerun flag to prevent unnecessary computation
-        email = self.get_body_argument("email", default = None)
+        email = self.find_argument("email", default = None)
         status_code, reason = ObjectTrackingHandler.handler(self.identifier, email, ObjectTrackingHandler.callback)
 
         if status_code == 200:
@@ -108,10 +108,18 @@ class ObjectTrackingThread(threading.Thread):
         if os.path.exists(db_path):  # If results database already exists,
             os.remove(db_path)  # then remove it--it'll be recreated.
 
+        fbttf_call = ["feature-based-tracking", tracking_path, "--tf", "--database-filename", db_path]
+        fbtgf_call = ["feature-based-tracking", tracking_path, "--gf", "--database-filename", db_path]
+
+        mask_filename = os.path.join(get_project_path(self.identifier), "mask.jpg")
+        if os.path.exists(mask_filename):
+            fbttf_call.extend(["--mask-filename", mask_filename])
+            fbtgf_call.extend(["--mask-filename", mask_filename])
+
         try:
-            subprocess.check_output(["feature-based-tracking", tracking_path, "--tf", "--database-filename", db_path])
-            subprocess.check_output(["feature-based-tracking", tracking_path, "--gf", "--database-filename", db_path])
-            subprocess.check_output(["classify-objects.py", "--cfg", tracking_path, "-d", db_path])  # Classify road users
+            subprocess.check_call(fbttf_call)
+            subprocess.check_call(fbtgf_call)
+            subprocess.check_call(["classify-objects.py", "--cfg", tracking_path, "-d", db_path])  # Classify road users
         except subprocess.CalledProcessError as excp:
             StatusHelper.set_status(self.identifier, Status.Type.OBJECT_TRACKING, Status.Flag.FAILURE)
             return self.callback(500, excp.output, self.identifier, self.email)
