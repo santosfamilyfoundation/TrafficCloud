@@ -37,7 +37,6 @@ class CreateSpeedDistributionHandler(BaseHandler):
 
     def get(self):
         vehicle_only = self.find_argument('vehicle_only', bool, default=True)
-        print vehicle_only
         speed_limit = self.find_argument('speed_limit', int, default=25)
         status_code, reason = CreateSpeedDistributionHandler.handler(self.identifier, speed_limit, vehicle_only)
         if status_code == 200:
