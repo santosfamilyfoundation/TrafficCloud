@@ -54,6 +54,14 @@ class BaseHandler(tornado.web.RequestHandler):
             return ret_val
         else:
             try:
+                if expected_type is bool and isinstance(ret_val, basestring):
+                    if ret_val.lower()=='true':
+                        return True
+                    elif ret_val.lower()=='false':
+                        return False
+                    else:
+                        print 'default'
+                        return default
                 return expected_type(ret_val)
             except:
                 self.error_message = 'Improper type for argument {}. Expected {}, got {}'.format(arg_name,expected_type.__name__, type(ret_val).__name__)

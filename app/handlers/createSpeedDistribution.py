@@ -7,6 +7,7 @@ from traffic_cloud_utils.app_config import get_project_path, get_project_video_p
 from traffic_cloud_utils.video import get_framerate
 from traffic_cloud_utils.plotting.visualization import vel_distribution
 
+from traffic_cloud_utils.statusHelper import StatusHelper, Status
 import json
 import traceback
 
@@ -22,13 +23,13 @@ class CreateSpeedDistributionHandler(BaseHandler):
     @apiParam {Boolean} [vehicle_only] Flag for specifying only vehicle speeds
 
     @apiSuccess {File} image_jpg The API will return the created graph upon success.
-    
+
     @apiError error_message The error message to display.
     """
     def prepare(self):
         self.identifier = self.find_argument('identifier', str)
         self.project_exists(self.identifier)
-        
+
         status_dict = StatusHelper.get_status(self.identifier)
         if status_dict[Status.Type.SAFETY_ANALYSIS] != Status.Flag.COMPLETE:
             status_code = 412
@@ -36,11 +37,12 @@ class CreateSpeedDistributionHandler(BaseHandler):
 
     def get(self):
         vehicle_only = self.find_argument('vehicle_only', bool, default=True)
+        print vehicle_only
         speed_limit = self.find_argument('speed_limit', int, default=25)
-        status_code, reason = CreateSpeedDistributionHandler.handler(identifier, speed_limit, vehicle_only)
+        status_code, reason = CreateSpeedDistributionHandler.handler(self.identifier, speed_limit, vehicle_only)
         if status_code == 200:
             image_path = os.path.join(\
-                                    get_project_path(identifier),\
+                                    get_project_path(self.identifier),\
                                     'final_images',\
                                     'velocityPDF.jpg')
             self.set_header('Content-Disposition',\

@@ -30,7 +30,7 @@ class ConfigHandler(BaseHandler):
     def prepare(self):
         self.identifier = self.find_argument('identifier', str)
         self.project_exists(self.identifier)
-        
+
     def post(self):
         config_keys = default_config_dict().keys()
         config_dict = {}
@@ -42,7 +42,7 @@ class ConfigHandler(BaseHandler):
 
         self.handler(self.identifier, config_dict)
 
-        self.finish("Config")
+        self.finish()
 
     @staticmethod
     def handler(identifier, config_dict):
