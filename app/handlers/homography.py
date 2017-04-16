@@ -72,8 +72,15 @@ class HomographyHandler(BaseHandler):
 
     def write_homography_files(self):
         project_dir = get_project_path(self.identifier)
-        aerial_pts = literal_eval(self.find_argument('aerial_pts'))
-        camera_pts = literal_eval(self.find_argument('camera_pts'))
+        aerial_pts = self.find_argument('aerial_pts', list)
+        camera_pts = self.find_argument('camera_pts', list)
+
+        if isinstance(aerial_pts[0],basestring):
+            aerial_pts = [[float(aerial_pts[i]),float(aerial_pts[i+1])] for i in xrange(0,len(aerial_pts), 2)]
+
+        if isinstance(camera_pts[0],basestring):
+            camera_pts = [[float(camera_pts[i]),float(camera_pts[i+1])] for i in xrange(0,len(camera_pts), 2)]
+
 
         if  ((aerial_pts is not None) and (camera_pts is not None)) and\
             (isinstance(aerial_pts, list) and isinstance(camera_pts, list)) and\
@@ -112,6 +119,6 @@ class HomographyHandler(BaseHandler):
             if not (isinstance(i, list) and len(i)==2):
                 return False
             for j in i:
-                if not isinstance(j, float):
+                if not isinstance(j, (int,float)):
                     return False
         return True

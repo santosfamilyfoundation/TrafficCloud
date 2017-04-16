@@ -33,7 +33,12 @@ class BaseHandler(tornado.web.RequestHandler):
                     ret_val = default
             elif 'x-www-form-urlencoded' in content_type:
                 # Grab from form data
-                ret_val = self.get_body_argument(arg_name, default=default)
+                if expected_type is list:
+                    ret_val = self.get_body_arguments(arg_name)
+                    if ret_val == []:
+                        ret_val = default
+                else:
+                    ret_val = self.get_body_argument(arg_name, default=default)
             else:
                 self.error_message = 'Content type {} is unsupported'.format(content_type)
                 raise tornado.web.HTTPError(status_code=400)
@@ -45,7 +50,7 @@ class BaseHandler(tornado.web.RequestHandler):
             self.error_message = 'Only GET and POST are supported methods for this API'
             raise tornado.web.HTTPError(status_code=405)
 
-        if isinstance(ret_val, expected_type):
+        if isinstance(ret_val, expected_type) or ret_val is None:
             return ret_val
         else:
             try:
