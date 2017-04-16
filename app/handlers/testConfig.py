@@ -47,10 +47,10 @@ class TestConfigHandler(BaseHandler):
     """
 
     def prepare(self):
-        self.identifier = self.find_argument('identifier')
+        self.identifier = self.find_argument('identifier', str)
         self.project_exists(self.identifier)
         
-        self.test_flag = self.find_argument('test_flag')
+        self.test_flag = self.find_argument('test_flag', str)
         status_dict = StatusHelper.get_status(self.identifier)
         if self.test_flag == "feature":
             status_type = Status.Type.FEATURE_TEST
@@ -85,8 +85,8 @@ class TestConfigHandler(BaseHandler):
                     raise tornado.web.HTTPError(status_code = status_code)
 
     def post(self):
-        frame_start = int(self.find_argument("frame_start", default = 0))
-        num_frames = int(self.find_argument("num_frames", default = 120))
+        frame_start = self.find_argument("frame_start", int, default = 0)
+        num_frames = self.find_argument("num_frames", int, default = 120)
         if num_frames > 200:
             num_frames = 200
 

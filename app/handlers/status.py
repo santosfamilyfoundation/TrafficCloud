@@ -24,7 +24,7 @@ class StatusHandler(BaseHandler):
     @apiError error_message The error message to display. (Will return unique error message if object tracking has NOT been run on specified project)
     """
     def prepare(self):
-        self.identifier = self.find_argument('identifier')
+        self.identifier = self.find_argument('identifier', str)
         self.project_exists(self.identifier)
 
     def get(self):

@@ -28,7 +28,7 @@ class SafetyAnalysisHandler(BaseHandler):
     """
 
     def prepare(self):
-        self.identifier = self.find_argument('identifier')
+        self.identifier = self.find_argument('identifier', str)
         self.project_exists(self.identifier)
         
         status_dict = StatusHelper.get_status(self.identifier)
@@ -43,7 +43,7 @@ class SafetyAnalysisHandler(BaseHandler):
         StatusHelper.set_status(self.identifier, Status.Type.SAFETY_ANALYSIS, Status.Flag.IN_PROGRESS)
 
     def post(self):
-        email = self.find_argument("email", default = None)
+        email = self.find_argument("email", str, default = None)
         status_code, reason = SafetyAnalysisHandler.handler(self.identifier, email, SafetyAnalysisHandler.callback)
 
         if status_code == 200:

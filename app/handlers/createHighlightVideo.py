@@ -44,7 +44,7 @@ class CreateHighlightVideoHandler(BaseHandler):
     @apiError error_message The error message to display.
     """
     def prepare(self):
-        self.identifier = self.find_argument('identifier')
+        self.identifier = self.find_argument('identifier', str)
         self.project_exists(self.identifier)
         
         status_dict = StatusHelper.get_status(self.identifier)
@@ -72,10 +72,10 @@ class CreateHighlightVideoHandler(BaseHandler):
         self.finish()
 
     def post(self):
-        email = self.find_argument('email')
-        ttc_threshold = float(self.find_argument('ttc_threshold', default=1.5))
-        vehicle_only = bool(self.find_argument('vehicle_only', default=True))
-        num_near_misses_to_use = int(self.find_argument('num_near_misses_to_use', default=10))
+        email = self.find_argument('email', str)
+        ttc_threshold = self.find_argument('ttc_threshold', float, default=1.5)
+        vehicle_only = self.find_argument('vehicle_only', bool, default=True)
+        num_near_misses_to_use = self.find_argument('num_near_misses_to_use', int, default=10)
         status_code, reason = CreateHighlightVideoHandler.handler(self.identifier, email, ttc_threshold, vehicle_only, num_near_misses_to_use)
         if status_code == 200:
             self.finish("Create Highlight Video")

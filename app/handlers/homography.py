@@ -41,7 +41,7 @@ class HomographyHandler(BaseHandler):
     """
 
     def prepare(self):
-        self.identifier = self.find_argument('identifier')
+        self.identifier = self.find_argument('identifier', str)
         self.project_exists(self.identifier)
 
         status_dict = StatusHelper.get_status(self.identifier)
@@ -52,7 +52,7 @@ class HomographyHandler(BaseHandler):
         StatusHelper.set_status(self.identifier, Status.Type.HOMOGRAPHY, Status.Flag.IN_PROGRESS)
 
     def post(self):
-        self.up_ratio = float(self.find_argument('unit_pixel_ratio'))
+        self.up_ratio = self.find_argument('unit_pixel_ratio', float)
         self.write_homography_files()
         StatusHelper.set_status(self.identifier, Status.Type.HOMOGRAPHY, Status.Flag.COMPLETE)
         self.finish()

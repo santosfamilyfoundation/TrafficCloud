@@ -22,25 +22,29 @@ class BaseHandler(tornado.web.RequestHandler):
         method_type = self.request.method.lower()
         ret_val = None
         if method_type == 'post':
+            # Try to get the arg from the body
             content_type = self.request.headers['Content-Type']
             if 'application/json' in content_type:
+                # Grab from json
                 try:
                     json = tornado.escape.json_decode(self.request.body)
                     ret_val = json[arg_name]
                 except (ValueError,KeyError) as V :
                     ret_val = default
             elif 'x-www-form-urlencoded' in content_type:
+                # Grab from form data
                 ret_val = self.get_body_argument(arg_name, default=default)
             else:
                 self.error_message = 'Content type {} is unsupported'.format(content_type)
                 raise tornado.web.HTTPError(status_code=400)
         elif method_type == 'get':
-            # Try to get the identifier from the header instead
+            # Try to get the arg from the header instead
             ret_val = self.get_argument(arg_name, default=default)
         else:
             # We don't currently support other method types
             self.error_message = 'Only GET and POST are supported methods for this API'
             raise tornado.web.HTTPError(status_code=405)
+
         if isinstance(ret_val, expected_type):
             return ret_val
         else:
@@ -49,6 +53,7 @@ class BaseHandler(tornado.web.RequestHandler):
             except:
                 self.error_message = 'Improper type for argument {}. Expected {}, got {}'.format(arg_name,expected_type.__name__, type(ret_val).__name__)
                 raise tornado.web.HTTPError(status_code=400)
+
     def write_error(self, status_code, **kwargs):
         self.set_header('Content-Type', 'application/json')
 

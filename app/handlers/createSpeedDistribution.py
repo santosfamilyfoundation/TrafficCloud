@@ -26,7 +26,7 @@ class CreateSpeedDistributionHandler(BaseHandler):
     @apiError error_message The error message to display.
     """
     def prepare(self):
-        self.identifier = self.find_argument('identifier')
+        self.identifier = self.find_argument('identifier', str)
         self.project_exists(self.identifier)
         
         status_dict = StatusHelper.get_status(self.identifier)
@@ -35,9 +35,8 @@ class CreateSpeedDistributionHandler(BaseHandler):
             self.error_message = "Safety analysis did not complete successfully, try re-running it."
 
     def get(self):
-        identifier = self.find_argument('identifier')
-        vehicle_only = bool(self.find_argument('vehicle_only', default=True))
-        speed_limit = int(self.find_argument('speed_limit', default=25))
+        vehicle_only = self.find_argument('vehicle_only', bool, default=True)
+        speed_limit = self.find_argument('speed_limit', int, default=25)
         status_code, reason = CreateSpeedDistributionHandler.handler(identifier, speed_limit, vehicle_only)
         if status_code == 200:
             image_path = os.path.join(\
