@@ -20,7 +20,7 @@ class CreateSpeedDistributionHandler(BaseHandler):
     @apiDescription Calling this route will create a graph of the speed distribution from a specified project. The image will then be sent back in the response body. This route requires running object tracking on the video, and then running safety analysis on the results of the object tracking beforehand.
     @apiParam {String} identifier The identifier of the project to create a speed distribution for.
     @apiParam {Integer} [speed_limit] speed limit of the intersection. Defaults to 25 mph.
-    @apiParam {Boolean} [vehicle_only] Flag for specifying only vehicle speeds
+    @apiParam {Boolean} [vehicle_only] Flag for specifying only vehicle speeds. Takes True, False, 1 (true), or 0 (false). Defaults to True.
 
     @apiSuccess {File} image_jpg The API will return the created graph upon success.
 
