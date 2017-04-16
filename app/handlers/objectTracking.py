@@ -35,6 +35,8 @@ class ObjectTrackingHandler(BaseHandler):
 
     def prepare(self):
         self.identifier = self.find_argument('identifier')
+        self.project_exists(self.identifier)
+        
         status_dict = StatusHelper.get_status(self.identifier)
         if status_dict[Status.Type.OBJECT_TRACKING] == Status.Flag.IN_PROGRESS:
             status_code = 423

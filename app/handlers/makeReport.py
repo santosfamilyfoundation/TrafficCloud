@@ -21,10 +21,12 @@ class MakeReportHandler(BaseHandler):
 
     @apiError error_message The error message to display.
     """
-    def get(self):
-        identifier = self.find_argument('identifier')
-        project_dir = get_project_path(identifier)
+    def prepare(self):
+        self.identifier = self.find_argument('identifier')
+        self.project_exists(self.identifier)
 
+    def get(self):
+        
         if (not os.path.exists(os.path.join(project_dir,\
                                             'final_images',\
                                             'road_user_icon_counts.jpg'))):
@@ -37,7 +39,7 @@ class MakeReportHandler(BaseHandler):
             self.error_message = 'Speed Distribution must be run before the report can be generated.'
             raise tornado.web.HTTPError(status_code=400)
 
-        status_code, reason = MakeReportHandler.handler(identifier)
+        status_code, reason = MakeReportHandler.handler(self.identifier)
 
         if status_code == 200:
             report_path = os.path.join(project_dir,\

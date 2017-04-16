@@ -48,6 +48,8 @@ class TestConfigHandler(BaseHandler):
 
     def prepare(self):
         self.identifier = self.find_argument('identifier')
+        self.project_exists(self.identifier)
+        
         self.test_flag = self.find_argument('test_flag')
         status_dict = StatusHelper.get_status(self.identifier)
         if self.test_flag == "feature":

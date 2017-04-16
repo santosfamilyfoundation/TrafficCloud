@@ -2,12 +2,21 @@ import tornado.web
 import json
 import traceback
 import os
+from traffic_cloud_utils.app_config import get_project_path
 
 class BaseHandler(tornado.web.RequestHandler):
     def initialize(self):
         self.error_message = None
         self.MB = 1024*1024
         self.GB = 1024*self.MB
+
+    def project_exists(self, identifier):
+        if identifier == None:
+            self.error_message = 'Identifier required but none given!'
+            raise tornado.web.HTTPError(status_code=400)
+        if not os.path.exists(get_project_path(identifier)):
+            self.error_message = 'Invalid Identifier {}. This project does not exist!'.format(identifier)
+            raise tornado.web.HTTPError(status_code=404)
 
     def find_argument(self, arg_name, default=None):
         method_type = self.request.method.lower()

@@ -42,11 +42,10 @@ class HomographyHandler(BaseHandler):
 
     def prepare(self):
         self.identifier = self.find_argument('identifier')
+        self.project_exists(self.identifier)
 
-        #TODO: Make sure that the project actually exists, ie. project_exists(id)
-
-        #Handle the status correctly
-        if StatusHelper.get_status(self.identifier)[Status.Type.HOMOGRAPHY] == Status.Flag.IN_PROGRESS:
+        status_dict = StatusHelper.get_status(self.identifier)
+        if status_dict[Status.Type.HOMOGRAPHY] == Status.Flag.IN_PROGRESS:
             status_code = 423
             self.error_message = "Currently uploading homography. Please wait."
             raise tornado.web.HTTPError(status_code = status_code)

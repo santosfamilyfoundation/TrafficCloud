@@ -22,10 +22,12 @@ class RetrieveResultsHandler(BaseHandler):
 
     @apiError error_message The error message to display.
     """
+    def prepare(self):
+        self.identifier = self.find_argument('identifier')
+        self.project_exists(self.identifier)
     
     def get(self):
-        identifier = self.find_argument('identifier')
-        project_path = get_project_path(identifier)
+        project_path = get_project_path(self.identifier)
         file_videos = os.path.join(project_path, 'final_videos')
         file_images = os.path.join(project_path, 'final_images')
         file_report = os.path.join(project_path, 'santosreport.pdf')

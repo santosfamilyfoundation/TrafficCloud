@@ -27,9 +27,11 @@ class ConfigHandler(BaseHandler):
 
     @apiError error_message The error message to display.
     """
+    def prepare(self):
+        self.identifier = self.find_argument("identifier")
+        self.project_exists(self.identifier)
+        
     def post(self):
-        identifier = self.find_argument("identifier")
-
         config_keys = default_config_dict().keys()
         config_dict = {}
 
@@ -38,7 +40,7 @@ class ConfigHandler(BaseHandler):
             if arg != None:
                 config_dict[key] = arg
 
-        self.handler(identifier, config_dict)
+        self.handler(self.identifier, config_dict)
 
         self.finish("Config")
 
