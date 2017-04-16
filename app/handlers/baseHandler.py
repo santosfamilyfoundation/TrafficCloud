@@ -55,12 +55,12 @@ class BaseHandler(tornado.web.RequestHandler):
         else:
             try:
                 if expected_type is bool and isinstance(ret_val, basestring):
-                    if ret_val.lower()=='true':
+                    low = ret_val.lower()
+                    if low == 'true' or low == '1':
                         return True
-                    elif ret_val.lower()=='false':
+                    elif low == 'false' or low == '0':
                         return False
                     else:
-                        print 'default'
                         return default
                 return expected_type(ret_val)
             except:
