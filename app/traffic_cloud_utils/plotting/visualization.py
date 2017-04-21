@@ -5,6 +5,7 @@ import math
 import os
 
 import numpy as np
+from scipy import stats
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from thinkstats2 import Cdf
