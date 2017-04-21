@@ -23,7 +23,6 @@ class CreateHighlightVideoHandler(BaseHandler):
 
     @apiParam {String} identifier The identifier of the project to create a highlight video for.
     @apiParam {Float} [ttc_threshold] Threshold for determining whether an interaction is dangerous. Default 1.5 seconds.
-    @apiParam {Integer} [vehicle_only] Flag for specifying only vehicle-vehicle interactions. Default to True.
     @apiParam {Integer} [num_near_misses_to_use] Number of near misses to use in creating the highlight video. If provided a value greater than 10, it will default to 10.
 
     @apiSuccess status_code The API will return a status code of 200 upon success.
@@ -46,7 +45,7 @@ class CreateHighlightVideoHandler(BaseHandler):
     def prepare(self):
         self.identifier = self.find_argument('identifier', str)
         self.project_exists(self.identifier)
-        
+
         status_dict = StatusHelper.get_status(self.identifier)
         if status_dict[Status.Type.HIGHLIGHT_VIDEO] == Status.Flag.IN_PROGRESS:
             status_code = 423
@@ -74,9 +73,8 @@ class CreateHighlightVideoHandler(BaseHandler):
     def post(self):
         email = self.find_argument('email', str)
         ttc_threshold = self.find_argument('ttc_threshold', float, default=1.5)
-        vehicle_only = self.find_argument('vehicle_only', bool, default=True)
         num_near_misses_to_use = self.find_argument('num_near_misses_to_use', int, default=10)
-        status_code, reason = CreateHighlightVideoHandler.handler(self.identifier, email, ttc_threshold, vehicle_only, num_near_misses_to_use)
+        status_code, reason = CreateHighlightVideoHandler.handler(self.identifier, email, ttc_threshold, num_near_misses_to_use)
         if status_code == 200:
             self.finish("Create Highlight Video")
         else:
@@ -84,7 +82,7 @@ class CreateHighlightVideoHandler(BaseHandler):
             raise tornado.web.HTTPError(status_code=status_code)
 
     @staticmethod
-    def handler(identifier, email, ttc_threshold, vehicle_only, num_near_misses_to_use):
+    def handler(identifier, email, ttc_threshold, num_near_misses_to_use):
 
         project_dir = get_project_path(identifier)
         if not os.path.exists(project_dir):
@@ -105,6 +103,7 @@ class CreateHighlightVideoHandler(BaseHandler):
         ttc_threshold_frames = int(ttc_threshold * float(get_framerate(video_path)))
 
         try:
+            vehicle_only = True # dangerous near miss interactions involve a car + (bike or ped)
             near_misses = getNearMissFrames(db, ttc_threshold_frames, vehicle_only)
         except Exception as error_message:
             StatusHelper.set_status(identifier, Status.Type.HIGHLIGHT_VIDEO, Status.Flag.FAILURE, failure_message='Failed to get near miss frames.')
