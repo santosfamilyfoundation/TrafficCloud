@@ -19,8 +19,6 @@ class CreateSpeedDistributionHandler(BaseHandler):
     @apiGroup Results
     @apiDescription Calling this route will create a graph of the speed distribution from a specified project. The image will then be sent back in the response body. This route requires running object tracking on the video, and then running safety analysis on the results of the object tracking beforehand.
     @apiParam {String} identifier The identifier of the project to create a speed distribution for.
-    @apiParam {Integer} [speed_limit] speed limit of the intersection. Defaults to 25 mph.
-    @apiParam {Boolean} [vehicle_only] Flag for specifying only vehicle speeds. Takes True, False, 1 (true), or 0 (false). Defaults to True.
 
     @apiSuccess {File} image_jpg The API will return the created graph upon success.
 
@@ -36,9 +34,7 @@ class CreateSpeedDistributionHandler(BaseHandler):
             self.error_message = "Safety analysis did not complete successfully, try re-running it."
 
     def get(self):
-        vehicle_only = self.find_argument('vehicle_only', bool, default=True)
-        speed_limit = self.find_argument('speed_limit', int, default=25)
-        status_code, reason = CreateSpeedDistributionHandler.handler(self.identifier, speed_limit, vehicle_only)
+        status_code, reason = CreateSpeedDistributionHandler.handler(self.identifier)
         if status_code == 200:
             image_path = os.path.join(\
                                     get_project_path(self.identifier),\
@@ -55,7 +51,7 @@ class CreateSpeedDistributionHandler(BaseHandler):
             raise tornado.web.HTTPError(status_code=status_code)
 
     @staticmethod
-    def handler(identifier, speed_limit, vehicle_only):
+    def handler(identifier):
         project_dir = get_project_path(identifier)
         if not os.path.exists(project_dir):
             return (500, 'Project directory does not exist. Check your identifier?')
@@ -72,6 +68,6 @@ class CreateSpeedDistributionHandler(BaseHandler):
         if not os.path.exists(video_path):
             return (500, 'Source video file does not exist.  Was the video uploaded?')
 
-        vel_distribution(db, float(get_framerate(video_path)), speed_limit, final_images, vehicle_only)
+        vel_distribution(db, float(get_framerate(video_path)), final_images)
 
         return (200, "Success")

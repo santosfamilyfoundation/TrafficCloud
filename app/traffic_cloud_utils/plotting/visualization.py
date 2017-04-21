@@ -5,11 +5,13 @@ import math
 import os
 
 import numpy as np
+from scipy import stats
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import random
 from thinkstats2 import Cdf, EstimatedPdf
 import thinkplot
+import seaborn as sns
 
 from numpy.linalg.linalg import inv
 from numpy import loadtxt
@@ -290,26 +292,25 @@ def vel_histograms(fig, filename, fps, vistype='overall'):
     connection.commit()
     connection.close()
 
-def vel_distribution(filename, fps, speed_limit=25, dir=None, only_vehicle=True):
+def vel_distribution(filename, fps, save_dir):
     """
     Arguments
     ---------
     filename: str, path to database
     fps: frame rate of the video, in frames per second
-    speed_limit: speed limit of the intersection
-    dir: directory to save image, if None don't automatically save
-    only_vehicle: only show velocities of vehicles, default True
+    save_dir: directory to save image
     """
+    if not os.path.exists(save_dir):
+        raise ValueError("Save directory does not exist. Should be the final_images folder")
+
     connection = sqlite3.connect(filename)
     cursor = connection.cursor()
 
-    if only_vehicle:
-        queryStatement = '''SELECT object_trajectories.object_id AS object_id, frame, x, y, x_v, y_v
-            FROM object_trajectories INNER JOIN objects ON object_trajectories.object_id = objects.object_id
-            WHERE road_user_type = 1
-            ORDER BY object_id, frame'''
-    else:
-        queryStatement = 'SELECT object_id, frame, x, y, x_v, y_v FROM object_trajectories ORDER BY object_id, frame'
+    # Query for trajectories of only cars
+    queryStatement = '''SELECT object_trajectories.object_id AS object_id, frame, x, y, x_v, y_v
+        FROM object_trajectories INNER JOIN objects ON object_trajectories.object_id = objects.object_id
+        WHERE road_user_type = 1
+        ORDER BY object_id, frame'''
     cursor.execute(queryStatement)
 
     obj_id = 0;
@@ -342,23 +343,20 @@ def vel_distribution(filename, fps, speed_limit=25, dir=None, only_vehicle=True)
             xvels = []
             yvels = []
 
+    # calculate 85th percentile speed
     cdf = Cdf(obj_vels)
-    kdepdf = EstimatedPdf(obj_vels)
-    pr = cdf.PercentileRank(speed_limit)
+    speed_85 = cdf.Percentile(85)
 
-    titlestring = "{:0.1f} % of {} are exceeding the {} mph limit".format(
-        100 - pr,
-        'vehicles' if only_vehicle else 'road users',
-        speed_limit)
+    titlestring = "85th percentile speed of cars is {} mph".format(int(speed_85))
 
-    thinkplot.PrePlot(1)
-    thinkplot.Pdf(kdepdf)
-    thinkplot.Vlines(speed_limit, 0, 0.05)
-    thinkplot.Config(title=titlestring, xlabel='Velocity (mph)', ylabel='PDF')
-    if dir is not None:
-        thinkplot.Save(os.path.join(dir, 'velocityPDF'), formats=['jpg'], bbox_inches='tight')
-    else:
-        thinkplot.Show()
+    sns_plot = sns.distplot(obj_vels, kde=False)
+    ylim = plt.gca().axes.get_ylim()
+    plt.plot(len(ylim) * [speed_85], ylim)
+    fig = sns_plot.get_figure()
+    fig.suptitle(titlestring)
+    sns_plot.set_xlabel('Velocity (mph)')
+    sns_plot.set_ylabel('Counts')
+    fig.savefig(os.path.join(save_dir, 'velocityPDF.jpg'), format='jpg', bbox_inches='tight')
 
 def road_user_counts(filename):
     """obtains road user count information
