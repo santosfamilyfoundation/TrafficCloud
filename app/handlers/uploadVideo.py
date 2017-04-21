@@ -41,25 +41,27 @@ class UploadVideoHandler(BaseHandler):
         self.ps.data_received(chunk)
 
     def post(self):
+        self.identifier = None
         try:
             self.ps.data_complete()
             # If multiple files called "video" are sent, we pick the first one
             video_part = self.ps.get_parts_by_name("video")[0]
-            self.identifier = str(uuid4())
 
             if video_part:
+                self.identifier = str(uuid4())
                 create_project(self.identifier, video_part)
             else:
                 print "video_part was None"
                 self.error_message = "Error decoding video upload"
-                raise tornado.web.HTTPError(status_code = 500)
+                raise tornado.web.HTTPError(status_code = 400)
 
         except Exception as e:
             print "could not complete streaming of data parts"
             self.error_message = "Error uploading video: " + str(e)
-            raise tornado.web.HTTPError(status_code = 500)
+            raise tornado.web.HTTPError(status_code = 400)
 
         finally:
             self.ps.release_parts()
-            self.write({'identifier': self.identifier})
+            if self.identifier:
+                self.write({'identifier': self.identifier})
             self.finish()
