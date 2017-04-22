@@ -65,7 +65,7 @@ class TestConfigHandler(BaseHandler):
                 status_code = 412
                 raise tornado.web.HTTPError(status_code = status_code)
         if status_dict[Status.Type.FEATURE_TEST] == Status.Flag.IN_PROGRESS or status_dict[Status.Type.OBJECT_TEST] == Status.Flag.IN_PROGRESS:
-            status_code = 423
+            status_code = 409
             self.error_message = "Currently running a test. Please wait."
             raise tornado.web.HTTPError(status_code = status_code)
 

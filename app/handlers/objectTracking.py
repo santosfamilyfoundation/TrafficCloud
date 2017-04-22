@@ -39,7 +39,7 @@ class ObjectTrackingHandler(BaseHandler):
         
         status_dict = StatusHelper.get_status(self.identifier)
         if status_dict[Status.Type.OBJECT_TRACKING] == Status.Flag.IN_PROGRESS:
-            status_code = 423
+            status_code = 409
             self.error_message = "Currently analyzing your video. Please wait."
             raise tornado.web.HTTPError(status_code = status_code)
         if status_dict[Status.Type.HOMOGRAPHY] != Status.Flag.COMPLETE:

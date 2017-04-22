@@ -49,7 +49,7 @@ class CreateHighlightVideoHandler(BaseHandler):
         
         status_dict = StatusHelper.get_status(self.identifier)
         if status_dict[Status.Type.HIGHLIGHT_VIDEO] == Status.Flag.IN_PROGRESS:
-            status_code = 423
+            status_code = 409
             self.error_message = "Currently creating a highlight video. Please wait."
             raise tornado.web.HTTPError(status_code = status_code)
         if status_dict[Status.Type.SAFETY_ANALYSIS] != Status.Flag.COMPLETE:
