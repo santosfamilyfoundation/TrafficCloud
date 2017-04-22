@@ -75,11 +75,20 @@ class HomographyHandler(BaseHandler):
         aerial_pts = self.find_argument('aerial_pts', list)
         camera_pts = self.find_argument('camera_pts', list)
 
-        if isinstance(aerial_pts[0],basestring):
-            aerial_pts = [[float(aerial_pts[i]),float(aerial_pts[i+1])] for i in xrange(0,len(aerial_pts), 2)]
+        try:
+            if isinstance(aerial_pts[0],basestring):
+                aerial_pts = [[float(aerial_pts[i]),float(aerial_pts[i+1])] for i in xrange(0,len(aerial_pts), 2)]
 
-        if isinstance(camera_pts[0],basestring):
-            camera_pts = [[float(camera_pts[i]),float(camera_pts[i+1])] for i in xrange(0,len(camera_pts), 2)]
+            if isinstance(camera_pts[0],basestring):
+                camera_pts = [[float(camera_pts[i]),float(camera_pts[i+1])] for i in xrange(0,len(camera_pts), 2)]
+        except:
+            self.error_message = "Could not interpret the points given as floats. Try again with different points"
+            StatusHelper.set_status(\
+                                    self.identifier,\
+                                    Status.Type.HOMOGRAPHY,\
+                                    Status.Flag.FAILURE,
+                                    failure_message="Couldn't interpret uploaded points.")
+            raise tornado.web.HTTPError(status_code = 400)
 
 
         if  ((aerial_pts is not None) and (camera_pts is not None)) and\
@@ -102,7 +111,7 @@ class HomographyHandler(BaseHandler):
                                         Status.Type.HOMOGRAPHY,\
                                         Status.Flag.FAILURE,
                                         failure_message='Failed to find homography: '+str(e))
-                raise tornado.web.HTTPError(status_code = 500)
+                raise tornado.web.HTTPError(status_code = 400)
 
         else:
             self.error_message = "Could not interpret the points given. Try again with different points"
@@ -111,7 +120,7 @@ class HomographyHandler(BaseHandler):
                                     Status.Type.HOMOGRAPHY,\
                                     Status.Flag.FAILURE,
                                     failure_message="Couldn't interpret uploaded points.")
-            raise tornado.web.HTTPError(status_code = 500)
+            raise tornado.web.HTTPError(status_code = 400)
 
 
     def check_points(self, points):
