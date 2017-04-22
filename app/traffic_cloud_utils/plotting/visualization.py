@@ -118,17 +118,19 @@ def road_user_traj(filename, homographyFile, roadImageFile, save_path, objs_to_p
     connection.commit()
     connection.close()
 
-def vel_distribution(filename, fps, save_dir):
+    # return aplot
+
+def calculate_avg_vels(filename, fps):
     """
     Arguments
     ---------
     filename: str, path to database
     fps: frame rate of the video, in frames per second
-    save_dir: directory to save image
-    """
-    if not os.path.exists(save_dir):
-        raise ValueError("Save directory does not exist. Should be the final_images folder")
 
+    Returns
+    -------
+    obj_vels
+    """
     connection = sqlite3.connect(filename)
     cursor = connection.cursor()
 
@@ -157,8 +159,6 @@ def vel_distribution(filename, fps, save_dir):
             xvels = [abs(x) for x in xvels]
             yvels = [abs(y) for y in yvels]
 
-            speeds = [math.sqrt(vels[0]**2 + vels[1]**2) for vels in zip(xvels, yvels)]
-
             avg_xv = sum(xvels)/len(xvels)
             avg_yv = sum(yvels)/len(yvels)
 
@@ -169,12 +169,28 @@ def vel_distribution(filename, fps, save_dir):
             xvels = []
             yvels = []
 
+    return obj_vels
+
+def vel_distribution(filename, fps, save_dir):
+    """
+    Arguments
+    ---------
+    filename: str, path to database
+    fps: frame rate of the video, in frames per second
+    save_dir: directory to save image
+    """
+    if not os.path.exists(save_dir):
+        raise ValueError("Save directory does not exist. Should be the final_images folder")
+
+    obj_vels = calculate_avg_vels(filename, fps)
+
     # calculate 85th percentile speed
     cdf = Cdf(obj_vels)
     speed_85 = cdf.Percentile(85)
 
     titlestring = "85th percentile speed of cars is {} mph".format(int(speed_85))
 
+    plt.figure()
     sns_plot = sns.distplot(obj_vels, kde=False)
     ylim = plt.gca().axes.get_ylim()
     plt.plot(len(ylim) * [speed_85], ylim)
@@ -183,6 +199,44 @@ def vel_distribution(filename, fps, save_dir):
     sns_plot.set_xlabel('Velocity (mph)')
     sns_plot.set_ylabel('Counts')
     fig.savefig(os.path.join(save_dir, 'velocityPDF.jpg'), format='jpg', bbox_inches='tight')
+
+def compare_speeds_etl_plot(identifiers, project_labels, fps_list, save_dir):
+    """
+    identifiers: list of strings, directory paths to different project identifiers to compare
+    project_labels: list of strings, the names to show up in the graph legend
+    """
+    speed_85_list = []
+    speed_50_list = []
+    speed_99_list = []
+    for identifer, fps in zip(identifiers, fps_list):
+        filename = os.path.join(identifer, 'run/results.sqlite')
+        obj_vels = calculate_avg_vels(filename, fps)
+
+        cdf = Cdf(obj_vels)
+        speed_85_list.append(cdf.Percentile(85)) # 85th percentile speed should be the speed limit of the intersection
+        speed_50_list.append(cdf.Percentile(50))
+        speed_99_list.append(cdf.Percentile(99))
+
+    # compare85th, with project_labels under each bar
+    plt.figure()
+    sns_plot = sns.barplot(x=np.array(speed_85_list), y=np.array(project_labels))
+    fig = sns_plot.get_figure()
+    sns_plot.set_xlabel('85th Percentile Speed (mph)')
+    sns_plot.set_ylabel('Comparing video data captured for')
+    fig.savefig(os.path.join(save_dir, 'compare85th_{}.jpg'.format('_'.join(project_labels))),
+                format='jpg', bbox_inches='tight')
+
+    # comparePercentiles, with project_labels in the legend, each percentile under a grouping of bars
+    plt.figure()
+    N = len(project_labels)
+    sns_plot = sns.barplot(x=np.array(speed_50_list + speed_85_list + speed_99_list),
+                           y=np.array(['50th']*N+['85th']*N+['99th']*N), # percentile label linked to each speed in x
+                           hue=np.array(project_labels*3)) # 3 cuz 50th, 85h, 99th
+    fig = sns_plot.get_figure()
+    sns_plot.set_xlabel('Speed (mph)')
+    sns_plot.set_ylabel('Speed Percentile')
+    fig.savefig(os.path.join(save_dir, 'comparePercentiles_{}.jpg'.format('_'.join(project_labels))),
+                format='jpg', bbox_inches='tight')
 
 def road_user_counts(filename):
     """obtains road user count information
@@ -377,7 +431,7 @@ def turn_icon_counts(turn_dict, save_path, textcolor='#000000', facecolor='#FFFF
                     x = 0
                 elif t == 'x':
                     y = 0
-                 
+
             elif turn == 'right':
                 if t == 'y':
                     x = proportion * y

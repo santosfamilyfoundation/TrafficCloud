@@ -5,7 +5,7 @@ import tornado.web
 from baseHandler import BaseHandler
 from traffic_cloud_utils.app_config import get_project_path, get_project_video_path
 from traffic_cloud_utils.video import get_framerate
-from traffic_cloud_utils.plotting.visualization import vel_distribution
+from traffic_cloud_utils.plotting.visualization import vel_distribution, compare_speeds_etl_plot
 
 from traffic_cloud_utils.statusHelper import StatusHelper, Status
 import json
@@ -70,4 +70,9 @@ class CreateSpeedDistributionHandler(BaseHandler):
 
         vel_distribution(db, float(get_framerate(video_path)), final_images)
 
+        compare_speeds_etl_plot(identifiers=['/home/vagrant/SantosCloud/project_dir/1d455422-0d10-4d9f-8333-fd982767e39d',
+                                             '/home/vagrant/SantosCloud/project_dir/2ba93c6b-b85c-44b9-b743-9a6b078cebba'],
+                                             project_labels=['Harvey Hardware\n @ 19:00 - 20:00','Harvey Hardware\n @ 10:00 - 11:00'],
+                                 fps_list=[29.97, 29.97],
+                                 save_dir=final_images)
         return (200, "Success")
