@@ -62,6 +62,9 @@ class HomographyHandler(BaseHandler):
                         get_project_path(self.identifier),\
                         'homography',\
                         'homography.txt')
+        if not os.path.exists(h_path):
+            self.error_message = "Homography file does not exist. Make sure that homography has been run successfully"
+            raise tornado.web.HTTPError(status_code = 404)
         self.write({'homography': np.ndarray.tolist(np.loadtxt(h_path))})
 
         StatusHelper.set_status(\
