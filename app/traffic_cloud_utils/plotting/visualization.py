@@ -200,15 +200,15 @@ def vel_distribution(filename, fps, save_dir):
     sns_plot.set_ylabel('Counts')
     fig.savefig(os.path.join(save_dir, 'velocityPDF.jpg'), format='jpg', bbox_inches='tight')
 
-def compare_speeds_etl_plot(identifiers, project_labels, fps_list, save_dir):
+def compare_speeds(identifiers_to_cmp, labels_to_cmp, fps_list, only_show_85th, save_dir):
     """
-    identifiers: list of strings, directory paths to different project identifiers to compare
-    project_labels: list of strings, the names to show up in the graph legend
+    identifiers_to_cmp: list of strings, directory paths to different project identifiers to compare
+    labels_to_cmp: list of strings, the names to show up in the graph legend
     """
     speed_85_list = []
     speed_50_list = []
     speed_99_list = []
-    for identifer, fps in zip(identifiers, fps_list):
+    for identifer, fps in zip(identifiers_to_cmp, fps_list):
         filename = os.path.join(identifer, 'run/results.sqlite')
         obj_vels = calculate_avg_vels(filename, fps)
 
@@ -217,26 +217,28 @@ def compare_speeds_etl_plot(identifiers, project_labels, fps_list, save_dir):
         speed_50_list.append(cdf.Percentile(50))
         speed_99_list.append(cdf.Percentile(99))
 
-    # compare85th, with project_labels under each bar
-    plt.figure()
-    sns_plot = sns.barplot(x=np.array(speed_85_list), y=np.array(project_labels))
-    fig = sns_plot.get_figure()
-    sns_plot.set_xlabel('85th Percentile Speed (mph)')
-    sns_plot.set_ylabel('Comparing video data captured for')
-    fig.savefig(os.path.join(save_dir, 'compare85th_{}.jpg'.format('_'.join(project_labels))),
-                format='jpg', bbox_inches='tight')
+    # compare85th, with labels_to_cmp under each bar
+    if only_show_85th:
+        plt.figure()
+        sns_plot = sns.barplot(x=np.array(speed_85_list), y=np.array(labels_to_cmp))
+        fig = sns_plot.get_figure()
+        sns_plot.set_xlabel('85th Percentile Speed (mph)')
+        sns_plot.set_ylabel('Comparing video data captured for')
+        fig.savefig(os.path.join(save_dir, 'compare85th_{}.jpg'.format('_'.join(labels_to_cmp))),
+                    format='jpg', bbox_inches='tight')
 
-    # comparePercentiles, with project_labels in the legend, each percentile under a grouping of bars
-    plt.figure()
-    N = len(project_labels)
-    sns_plot = sns.barplot(x=np.array(speed_50_list + speed_85_list + speed_99_list),
-                           y=np.array(['50th']*N+['85th']*N+['99th']*N), # percentile label linked to each speed in x
-                           hue=np.array(project_labels*3)) # 3 cuz 50th, 85h, 99th
-    fig = sns_plot.get_figure()
-    sns_plot.set_xlabel('Speed (mph)')
-    sns_plot.set_ylabel('Speed Percentile')
-    fig.savefig(os.path.join(save_dir, 'comparePercentiles_{}.jpg'.format('_'.join(project_labels))),
-                format='jpg', bbox_inches='tight')
+    # comparePercentiles, with labels_to_cmp in the legend, each percentile under a grouping of bars
+    else:
+        plt.figure()
+        N = len(labels_to_cmp)
+        sns_plot = sns.barplot(x=np.array(speed_50_list + speed_85_list + speed_99_list),
+                               y=np.array(['50th']*N+['85th']*N+['99th']*N), # percentile label linked to each speed in x
+                               hue=np.array(labels_to_cmp*3)) # 3 cuz 50th, 85h, 99th
+        fig = sns_plot.get_figure()
+        sns_plot.set_xlabel('Speed (mph)')
+        sns_plot.set_ylabel('Speed Percentile')
+        fig.savefig(os.path.join(save_dir, 'comparePercentiles_{}.jpg'.format('_'.join(labels_to_cmp))),
+                    format='jpg', bbox_inches='tight')
 
 def road_user_counts(filename):
     """obtains road user count information
