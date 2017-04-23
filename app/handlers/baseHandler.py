@@ -47,7 +47,9 @@ class BaseHandler(tornado.web.RequestHandler):
         elif method_type == 'get':
             # Try to get the arg from the header instead
             if expected_type is list:
-                ret_val = self.get_body_arguments(arg_name)
+                print("LIST")
+                ret_val = self.get_arguments(arg_name)
+                print ret_val
                 if ret_val == []:
                     ret_val = default
             else:
