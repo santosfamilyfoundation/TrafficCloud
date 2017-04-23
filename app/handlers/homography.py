@@ -81,7 +81,6 @@ class HomographyHandler(BaseHandler):
         try:
             if isinstance(aerial_pts[0],basestring):
                 aerial_pts = [[float(aerial_pts[i]),float(aerial_pts[i+1])] for i in xrange(0,len(aerial_pts), 2)]
-
             if isinstance(camera_pts[0],basestring):
                 camera_pts = [[float(camera_pts[i]),float(camera_pts[i+1])] for i in xrange(0,len(camera_pts), 2)]
         except ValueError as v:
@@ -91,6 +90,14 @@ class HomographyHandler(BaseHandler):
                                     Status.Type.HOMOGRAPHY,\
                                     Status.Flag.FAILURE,
                                     failure_message="Couldn't interpret uploaded points.")
+            raise tornado.web.HTTPError(status_code = 400)
+        except IndexError as i:
+            self.error_message = "Malformed points. Try again with different points"
+            StatusHelper.set_status(\
+                            self.identifier,\
+                            Status.Type.HOMOGRAPHY,\
+                            Status.Flag.FAILURE,
+                            failure_message="Couldn't interpret uploaded points.")
             raise tornado.web.HTTPError(status_code = 400)
 
 
