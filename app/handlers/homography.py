@@ -84,7 +84,7 @@ class HomographyHandler(BaseHandler):
 
             if isinstance(camera_pts[0],basestring):
                 camera_pts = [[float(camera_pts[i]),float(camera_pts[i+1])] for i in xrange(0,len(camera_pts), 2)]
-        except:
+        except ValueError as v:
             self.error_message = "Could not interpret the points given as floats. Try again with different points"
             StatusHelper.set_status(\
                                     self.identifier,\
