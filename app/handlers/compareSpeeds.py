@@ -34,9 +34,9 @@ class CompareSpeedsHandler(BaseHandler):
         self.only_show_85th = self.find_argument('only_show_85th', bool, False)
 
         print self.identifiers_to_cmp
-        # if not isinstance(self.identifiers_to_cmp, list) or not isinstance(self.labels_to_cmp, list):
-        #     status_code = 400
-        #     self.error_message = "identifiers_to_cmp and labels_to_cmp should be. Requires at least 2 elements to compare."
+        if not isinstance(self.identifiers_to_cmp, list) or not isinstance(self.labels_to_cmp, list):
+            status_code = 400
+            self.error_message = "identifiers_to_cmp and labels_to_cmp should be lists."
 
         if len(self.identifiers_to_cmp) < 2 or len(self.labels_to_cmp) < 2:
             status_code = 400
@@ -82,11 +82,13 @@ class CompareSpeedsHandler(BaseHandler):
     def handler(parent_identifier, identifiers_to_cmp, labels_to_cmp, only_show_85th):
 
         # Check if all the neccessary data in each project exists in order to be compared
+        project_paths = []
         fps_list = []
         for identifier, label in zip(identifiers_to_cmp, labels_to_cmp):
             project_dir = get_project_path(identifier)
             if not os.path.exists(project_dir):
                 return (500, 'Project directory does not exist for {}. Check your identifier?'.format(label))
+            project_paths.append(project_dir)
 
             db = os.path.join(project_dir, 'run', 'results.sqlite')
             if not os.path.exists(db):
@@ -105,6 +107,6 @@ class CompareSpeedsHandler(BaseHandler):
         if not os.path.exists(final_images):
             os.mkdir(final_images)
 
-        compare_speeds(identifiers_to_cmp, labels_to_cmp, fps_list, only_show_85th, final_images)
+        compare_speeds(project_paths, labels_to_cmp, fps_list, only_show_85th, final_images)
 
         return (200, "Success")
