@@ -44,7 +44,12 @@ class BaseHandler(tornado.web.RequestHandler):
                 raise tornado.web.HTTPError(status_code=400)
         elif method_type == 'get':
             # Try to get the arg from the header instead
-            ret_val = self.get_argument(arg_name, default=default)
+            if expected_type is list:
+                ret_val = self.get_body_arguments(arg_name)
+                if ret_val == []:
+                    ret_val = default
+            else:
+                ret_val = self.get_argument(arg_name, default=default)
         else:
             # We don't currently support other method types
             self.error_message = 'Only GET and POST are supported methods for this API'
