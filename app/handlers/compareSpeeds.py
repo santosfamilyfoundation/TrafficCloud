@@ -33,19 +33,6 @@ class CompareSpeedsHandler(BaseHandler):
         self.labels_to_cmp = self.find_argument('labels_to_cmp', list)
         self.only_show_85th = self.find_argument('only_show_85th', bool, False)
 
-        print self.identifiers_to_cmp
-        if not isinstance(self.identifiers_to_cmp, list) or not isinstance(self.labels_to_cmp, list):
-            status_code = 400
-            self.error_message = "identifiers_to_cmp and labels_to_cmp should be lists."
-
-        if len(self.identifiers_to_cmp) < 2 or len(self.labels_to_cmp) < 2:
-            status_code = 400
-            self.error_message = "identifiers_to_cmp and labels_to_cmp contained less than 2 elements. Requires at least 2 elements to compare."
-
-        if len(self.identifiers_to_cmp) != len(self.labels_to_cmp):
-            status_code = 400
-            self.error_message = "identifiers_to_cmp and labels_to_cmp were not the same length."
-
         for identifier in self.identifiers_to_cmp:
             self.project_exists(identifier)
 
@@ -80,6 +67,14 @@ class CompareSpeedsHandler(BaseHandler):
 
     @staticmethod
     def handler(parent_identifier, identifiers_to_cmp, labels_to_cmp, only_show_85th):
+        if not isinstance(identifiers_to_cmp, list) or not isinstance(labels_to_cmp, list):
+            return (400, "identifiers_to_cmp and labels_to_cmp should be lists.")
+
+        if len(identifiers_to_cmp) < 2 or len(labels_to_cmp) < 2:
+            return (400, "identifiers_to_cmp and labels_to_cmp contained less than 2 elements. Requires at least 2 elements to compare.")
+
+        if len(identifiers_to_cmp) != len(labels_to_cmp):
+            return (400, "identifiers_to_cmp and labels_to_cmp were not the same length.")
 
         # Check if all the neccessary data in each project exists in order to be compared
         project_paths = []
