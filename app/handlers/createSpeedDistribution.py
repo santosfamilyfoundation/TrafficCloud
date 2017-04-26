@@ -15,7 +15,7 @@ class CreateSpeedDistributionHandler(BaseHandler):
     @apiName SpeedDistribution
     @apiVersion 0.1.0
     @apiGroup Results
-    @apiDescription Calling this route will create a graph of the speed distribution from a specified project. The image will then be sent back in the response body. This route requires running object tracking on the video, and then running safety analysis on the results of the object tracking beforehand.
+    @apiDescription Calling this route will create a graph of the speed distribution from a specified project. The image will then be sent back in the response body. This route requires running object tracking on the video beforehand.
     @apiParam {String} identifier The identifier of the project to create a speed distribution for.
 
     @apiSuccess {File} image_jpg The API will return the created graph upon success.
