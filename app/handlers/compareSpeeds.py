@@ -38,6 +38,7 @@ class CompareSpeedsHandler(BaseHandler):
         if status_dict[Status.Type.OBJECT_TRACKING] != Status.Flag.COMPLETE:
             status_code = 412
             self.error_message = "Object Tracking did not complete successfully, try re-running it."
+            raise tornado.web.HTTPError(status_code = status_code)
 
     def get(self):
         status_code, reason = CompareSpeedsHandler.handler(self.identifier,
@@ -46,19 +47,19 @@ class CompareSpeedsHandler(BaseHandler):
                                                     self.only_show_85th)
         if status_code == 200:
             if self.only_show_85th:
-                image_filename = 'compare85th_{}.jpg'.format('_'.join(self.labels_to_cmp))
+                image_filename = 'compare85th.jpg'
             else:
-                image_filename = 'comparePercentiles_{}.jpg'.format('_'.join(self.labels_to_cmp))
+                image_filename = 'comparePercentiles.jpg'
             image_path = os.path.join(\
                                     get_project_path(self.identifier),\
                                     'final_images',\
                                     image_filename)
             self.set_header('Content-Disposition',\
-                            'attachment; filename=velocityPDF.jpg')
+                            'attachment; filename={}'.format(image_filename))
             self.set_header('Content-Type', 'application/octet-stream')
             self.set_header('Content-Description', 'File Transfer')
             self.write_file_stream(image_path)
-            self.finish("Create Speed Distribution")
+            self.finish("Create Speed Comparison Chart")
         else:
             self.error_message = reason
             raise tornado.web.HTTPError(status_code=status_code)

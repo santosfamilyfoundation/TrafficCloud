@@ -76,7 +76,9 @@ class MakeReportHandler(BaseHandler):
         image_fns = [
             os.path.join(final_images, 'road_user_icon_counts.jpg'),
             os.path.join(final_images, 'velocityPDF.jpg'),
-            os.path.join(final_images, 'turningCounts.jpg')
+            os.path.join(final_images, 'turningCounts.jpg'),
+            os.path.join(final_images, 'compare85th.jpg'),
+            os.path.join(final_images, 'comparePercentiles.jpg')
         ]
 
         makePdf(report_path, image_fns, final_images)

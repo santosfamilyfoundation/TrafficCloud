@@ -18,16 +18,17 @@ def makePdf(out_path, listImages, dir = ''):
         pdf.add_page()
 
         img_path = os.path.join(dir,str(page))
-        img = Image.open(img_path)
-        w, h = img.size
-        
-        # all images default 8 inch width
-        width = 8
+        if os.path.exists(img_path):
+            img = Image.open(img_path)
+            w, h = img.size
 
-        # height in inches, relative to aspect ratio
-        height = width * (h // w)
+            # all images default 8 inch width
+            width = 8
 
-        pdf.image(img_path, x=1, y=1, w=width, h=height)
+            # height in inches, relative to aspect ratio
+            height = width * (h // w)
+
+            pdf.image(img_path, x=1, y=1, w=width, h=height)
 
     pdf.output(out_path, "F")
 

@@ -57,8 +57,7 @@ def road_user_traj(filename, homographyFile, roadImageFile, save_path, objs_to_p
     ax = fig.add_subplot(111)
     ax.set_axis_off()
     im = imread(roadImageFile)
-    height, width, _ = im.shape
-    implot = ax.imshow(im)
+    ax.imshow(im)
 
     userlist = ['unknown', 'car', 'pedestrian',
                 'motorcycle', 'bicycle', 'bus', 'truck']
@@ -209,7 +208,7 @@ def compare_speeds(identifiers_to_cmp, labels_to_cmp, fps_list, only_show_85th, 
     speed_50_list = []
     speed_99_list = []
     for identifer, fps in zip(identifiers_to_cmp, fps_list):
-        filename = os.path.join(identifer, 'run/results.sqlite')
+        filename = os.path.join(identifer, 'run', 'results.sqlite')
         obj_vels = calculate_avg_vels(filename, fps)
 
         cdf = Cdf(obj_vels)
@@ -224,7 +223,7 @@ def compare_speeds(identifiers_to_cmp, labels_to_cmp, fps_list, only_show_85th, 
         fig = sns_plot.get_figure()
         sns_plot.set_xlabel('85th Percentile Speed (mph)')
         sns_plot.set_ylabel('Comparing video data captured for')
-        fig.savefig(os.path.join(save_dir, 'compare85th_{}.jpg'.format('_'.join(labels_to_cmp))),
+        fig.savefig(os.path.join(save_dir, 'compare85th.jpg'),
                     format='jpg', bbox_inches='tight')
 
     # comparePercentiles, with labels_to_cmp in the legend, each percentile under a grouping of bars
@@ -237,7 +236,7 @@ def compare_speeds(identifiers_to_cmp, labels_to_cmp, fps_list, only_show_85th, 
         fig = sns_plot.get_figure()
         sns_plot.set_xlabel('Speed (mph)')
         sns_plot.set_ylabel('Speed Percentile')
-        fig.savefig(os.path.join(save_dir, 'comparePercentiles_{}.jpg'.format('_'.join(labels_to_cmp))),
+        fig.savefig(os.path.join(save_dir, 'comparePercentiles.jpg'),
                     format='jpg', bbox_inches='tight')
 
 def road_user_counts(filename):

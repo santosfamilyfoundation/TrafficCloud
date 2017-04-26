@@ -8,8 +8,6 @@ from traffic_cloud_utils.video import get_framerate
 from traffic_cloud_utils.plotting.visualization import vel_distribution
 
 from traffic_cloud_utils.statusHelper import StatusHelper, Status
-import json
-import traceback
 
 class CreateSpeedDistributionHandler(BaseHandler):
     """
@@ -32,6 +30,7 @@ class CreateSpeedDistributionHandler(BaseHandler):
         if status_dict[Status.Type.OBJECT_TRACKING] != Status.Flag.COMPLETE:
             status_code = 412
             self.error_message = "Object Tracking did not complete successfully, try re-running it."
+            raise tornado.web.HTTPError(status_code = status_code)
 
     def get(self):
         status_code, reason = CreateSpeedDistributionHandler.handler(self.identifier)
