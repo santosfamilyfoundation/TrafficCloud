@@ -5,11 +5,9 @@ import tornado.web
 from baseHandler import BaseHandler
 from traffic_cloud_utils.app_config import get_project_path, get_project_video_path
 from traffic_cloud_utils.video import get_framerate
-from traffic_cloud_utils.plotting.visualization import vel_distribution, compare_speeds
+from traffic_cloud_utils.plotting.visualization import compare_speeds
 
 from traffic_cloud_utils.statusHelper import StatusHelper, Status
-import json
-import traceback
 
 class CompareSpeedsHandler(BaseHandler):
     """

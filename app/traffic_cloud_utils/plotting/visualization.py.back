@@ -1,0 +1,386 @@
+#! /usr/bin/env python
+# import storage
+import sqlite3
+import math
+import os
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+from thinkstats2 import Cdf
+import seaborn as sns
+
+from numpy.linalg.linalg import inv
+from numpy import loadtxt
+
+from moving import Point
+
+from scipy.misc import imread
+
+import matplotlib.patches as mpatches
+
+# 2.23694 mph / (m/s) = (1 mi / 1609.34 m) * (3600 sec / 1 hr)
+MPS_MPH_CONVERSION = 2.23694
+
+"""
+Test this file with: python visualization.py stmarc.sqlite 30 homography.txt
+In the video_tracking/stmarc/stmarc-vis folder.
+"""
+
+
+
+def road_user_traj(fig, filename, fps, homographyFile, roadImageFile):
+    """
+    Plots all road-user trajectories.
+    """
+
+    homography = inv(loadtxt(homographyFile))
+
+    # print(homography)
+
+    connection = sqlite3.connect(filename)
+    cursor = connection.cursor()
+
+    queryStatement = 'SELECT * FROM objects ORDER BY object_id'
+    cursor.execute(queryStatement)
+
+    usertypes = {}
+    for row in cursor:
+        usertypes[row[0]] = row[1]
+
+    queryStatement = 'SELECT * FROM object_trajectories ORDER BY object_id, frame'
+    cursor.execute(queryStatement)
+
+    obj_id = 0
+    obj_traj_x = []
+    obj_traj_y = []
+
+    # aplot = QTPLT()
+    ax = fig.add_subplot(111)
+    ax.set_axis_off()
+    im = imread(roadImageFile)
+    implot = ax.imshow(im)
+
+    # colors = [(0,0,0), (0,0,1), (0,1,0), (1,0,1), (0,1,1), (1,1,0), (1,0,1)]
+    userlist = ['unknown', 'car', 'pedestrian',
+                'motorcycle', 'bicycle', 'bus', 'truck']
+    alpha = 0.22
+    colors = {'unknown': (0, 0, 0, alpha), 'car': (0, 0, 1, alpha), 'pedestrian': (0, 1, 0, alpha), 'motorcycle': (
+        1, 0, 0, alpha), 'bicycle': (0, 1, 1, alpha), 'bus': (1, 1, 0, alpha), 'truck': (1, 0, 1, alpha)}
+
+    for row in cursor:
+        pos = Point(row[2], row[3])
+        # xpos = row[2]
+        # ypos = row[3]
+
+        usertype = usertypes[obj_id]
+
+        # print pos.x, pos.y
+        pos = pos.project(homography)
+        # print pos.x, pos.y
+        obj_traj_x.append(pos.x)
+        obj_traj_y.append(pos.y)
+        # print(obj_traj)
+
+        if(row[0] != obj_id):
+            # color = random.choice(colors)
+            usertype = userlist[usertype]
+
+            if usertype == 'pedestrian' or usertype == 'bicycle':
+                ax.plot(obj_traj_x[:-1], obj_traj_y[:-1], ".-",
+                    color=colors[usertype], label=usertype, linewidth=2, markersize=3)
+
+            print 'switching object to: ', row[0]
+            obj_id = row[0]
+            obj_traj_x = []
+            obj_traj_y = []
+
+    # Now add the legend with some customizations.
+
+    # plot_handles = []
+    # for user in userlist:
+    #     handle = mpatches.Patch(color=colors[user], label=user)
+    #     plt.legend(handles=handle, loc='upper right', shadow=True)
+
+    colorlist = []
+    recs = []
+    # pedestrians and bike trajectory only
+    for idx, i in enumerate([2, 4]):
+        colorlist.append(colors[userlist[i]])
+        recs.append(mpatches.Rectangle((0, 0), 1, 1, fc=colorlist[idx]))
+    ax.set_position([0.1, 0.1, 0.85, 0.85])
+    # ax.legend(recs,userlist, loc='center left', bbox_to_anchor=(1, 0.5))
+    ax.legend(recs, userlist, loc=8, mode="expand",
+              bbox_to_anchor=(-.5, -.5, .1, .1))
+
+    box = ax.get_position()
+    ax.set_position(
+        [box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])
+
+    # Put a legend below current axis
+    ax.legend(recs, [userlist[i] for i in [2,4]], loc='upper center', bbox_to_anchor=(
+        0.5, -0.05), fancybox=True, shadow=True, ncol=4)
+    # ax.legend(recs, userlist, bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0.)
+
+    # legend = plt.legend(loc='upper right', shadow=True)
+
+    ax.set_xlim([0, 1280])
+    ax.set_ylim([0, 720])
+    ax.set_ylim(ax.get_ylim()[::-1])
+
+    # ax.set_xlabel('X-Coordinate')
+    # ax.set_ylabel('Y-Coordinate')
+    ax.set_title('Road User Trajectories')
+
+    # plt.show()
+
+    connection.commit()
+    connection.close()
+
+    # return aplot
+
+def calculate_avg_vels(filename, fps):
+    """
+    Arguments
+    ---------
+    filename: str, path to database
+    fps: frame rate of the video, in frames per second
+
+    Returns
+    -------
+    obj_vels
+    """
+    connection = sqlite3.connect(filename)
+    cursor = connection.cursor()
+
+    # Query for trajectories of only cars
+    queryStatement = '''SELECT object_trajectories.object_id AS object_id, frame, x, y, x_v, y_v
+        FROM object_trajectories INNER JOIN objects ON object_trajectories.object_id = objects.object_id
+        WHERE road_user_type = 1
+        ORDER BY object_id, frame'''
+    cursor.execute(queryStatement)
+
+    obj_id = 0;
+    obj_vels = [];
+
+    xvels = []
+    yvels = []
+    for row in cursor:
+        xvel = row[4]
+        yvel = row[5]
+
+        xvels.append(xvel*fps*MPS_MPH_CONVERSION)
+        yvels.append(yvel*fps*MPS_MPH_CONVERSION)
+
+        # reading new object
+        if(row[0] != obj_id):
+            # save velocity information for old object before moving onward
+            xvels = [abs(x) for x in xvels]
+            yvels = [abs(y) for y in yvels]
+
+            speeds = [math.sqrt(vels[0]**2 + vels[1]**2) for vels in zip(xvels, yvels)]
+
+            avg_xv = sum(xvels)/len(xvels)
+            avg_yv = sum(yvels)/len(yvels)
+
+            avg_vel = math.sqrt(avg_xv**2 + avg_yv**2)
+            obj_vels.append(avg_vel)
+
+            obj_id = row[0]
+            xvels = []
+            yvels = []
+
+    return obj_vels
+
+def vel_distribution(filename, fps, save_dir):
+    """
+    Arguments
+    ---------
+    filename: str, path to database
+    fps: frame rate of the video, in frames per second
+    save_dir: directory to save image
+    """
+    if not os.path.exists(save_dir):
+        raise ValueError("Save directory does not exist. Should be the final_images folder")
+
+    obj_vels = calculate_avg_vels(filename, fps)
+
+    # calculate 85th percentile speed
+    cdf = Cdf(obj_vels)
+    speed_85 = cdf.Percentile(85)
+
+    titlestring = "85th percentile speed of cars is {} mph".format(int(speed_85))
+
+    plt.figure()
+    sns_plot = sns.distplot(obj_vels, kde=False)
+    ylim = plt.gca().axes.get_ylim()
+    plt.plot(len(ylim) * [speed_85], ylim)
+    fig = sns_plot.get_figure()
+    fig.suptitle(titlestring)
+    sns_plot.set_xlabel('Velocity (mph)')
+    sns_plot.set_ylabel('Counts')
+    fig.savefig(os.path.join(save_dir, 'velocityPDF.jpg'), format='jpg', bbox_inches='tight')
+
+def compare_speeds(identifiers_to_cmp, labels_to_cmp, fps_list, only_show_85th, save_dir):
+    """
+    identifiers_to_cmp: list of strings, directory paths to different project identifiers to compare
+    labels_to_cmp: list of strings, the names to show up in the graph legend
+    """
+    speed_85_list = []
+    speed_50_list = []
+    speed_99_list = []
+    for identifer, fps in zip(identifiers_to_cmp, fps_list):
+        filename = os.path.join(identifer, 'run/results.sqlite')
+        obj_vels = calculate_avg_vels(filename, fps)
+
+        cdf = Cdf(obj_vels)
+        speed_85_list.append(cdf.Percentile(85)) # 85th percentile speed should be the speed limit of the intersection
+        speed_50_list.append(cdf.Percentile(50))
+        speed_99_list.append(cdf.Percentile(99))
+
+    # compare85th, with labels_to_cmp under each bar
+    if only_show_85th:
+        plt.figure()
+        sns_plot = sns.barplot(x=np.array(speed_85_list), y=np.array(labels_to_cmp))
+        fig = sns_plot.get_figure()
+        sns_plot.set_xlabel('85th Percentile Speed (mph)')
+        sns_plot.set_ylabel('Comparing video data captured for')
+        fig.savefig(os.path.join(save_dir, 'compare85th_{}.jpg'.format('_'.join(labels_to_cmp))),
+                    format='jpg', bbox_inches='tight')
+
+    # comparePercentiles, with labels_to_cmp in the legend, each percentile under a grouping of bars
+    else:
+        plt.figure()
+        N = len(labels_to_cmp)
+        sns_plot = sns.barplot(x=np.array(speed_50_list + speed_85_list + speed_99_list),
+                               y=np.array(['50th']*N+['85th']*N+['99th']*N), # percentile label linked to each speed in x
+                               hue=np.array(labels_to_cmp*3)) # 3 cuz 50th, 85h, 99th
+        fig = sns_plot.get_figure()
+        sns_plot.set_xlabel('Speed (mph)')
+        sns_plot.set_ylabel('Speed Percentile')
+        fig.savefig(os.path.join(save_dir, 'comparePercentiles_{}.jpg'.format('_'.join(labels_to_cmp))),
+                    format='jpg', bbox_inches='tight')
+
+def road_user_counts(filename):
+    """obtains road user count information
+
+    Arguments
+    ---------
+    filename: sqlite database strings
+
+    Returns
+    -------
+    roadusercounts: dictionary mapping user type strings to counts
+    """
+    connection = sqlite3.connect(filename)
+    cursor = connection.cursor()
+
+    queryStatement = 'SELECT * FROM objects ORDER BY object_id'
+    cursor.execute(queryStatement)
+
+    userlist = ['unknown', 'car', 'pedestrian',
+                'motorcycle', 'bicycle', 'bus', 'truck']
+    roadusers = {'unknown': [], 'car': [], 'pedestrian': [],
+                 'motorcycle': [], 'bicycle': [], 'bus': [], 'truck': []}
+
+    for row in cursor:
+        obj_id = row[0]
+        usernum = row[1]
+
+        usertype = userlist[usernum]
+        roadusers[usertype].append(obj_id)
+
+    # print roadusers
+
+    roadusercounts = {}
+    for user in userlist:
+        roadusercounts[user] = len(roadusers[user])
+
+    return roadusercounts
+
+def road_user_chart(filename):
+    """Creates a bar graph chart of road user counts"""
+    roadusercounts = road_user_counts(filename)
+    userlist, numusers = zip(*roadusercounts.items())
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    width = 0.5
+    index = np.arange(len(userlist))
+    ax.bar(index, numusers, width)
+
+    ax.set_xticks(index + width / 2)
+    ax.set_xticklabels(userlist)
+
+    plt.xlabel('Road User Type')
+    plt.ylabel('Number of Road Users')
+    plt.title('Road User Type Counts')
+
+def road_user_icon_counts(title, car, bike, pedestrian, save_path, textcolor='#000000', facecolor='#FFFFFF', iconpath=None):
+    """
+    car, bike, pedestrian: str or int, the desired data to display under these different road users
+
+    Example:
+    road_user_icon_counts(title='Road User Counts', car=10, bike='bike', pedestrian=0, save_path='out.png')
+    """
+    dpi = 100.0
+    mpl_width, mpl_height = (10, 8)
+
+    # make figure without frame
+    fig = plt.figure(frameon=False)
+    fig.set_size_inches(mpl_width, mpl_height)
+    ax = fig.add_subplot(111)
+
+    # hide axis
+    ax.set_axis_off()
+
+    # set your axis size
+    ax.axis([0, mpl_width, 0, mpl_height])
+
+    fontsize = 30
+
+    # Title
+    title_y = 0.85
+    ax.text(0.5*mpl_width, title_y*mpl_height, str(title), horizontalalignment='center', fontsize=fontsize, color=textcolor)
+
+    car_loc = 0.15
+    bike_loc = 0.5
+    ped_loc = 0.85
+    icon_y = 0.6
+    text_y = 0.4
+
+    if iconpath is None:
+        # assumes that the icon image files are in the same directory as this file
+        iconpath = os.path.dirname(os.path.abspath(__file__))
+
+    # car icon
+    fn = os.path.join(iconpath, 'car.png')
+    arr_img = plt.imread(fn, format='png')
+    im = OffsetImage(arr_img, zoom=0.7)
+    ab = AnnotationBbox(im, (car_loc*mpl_width, icon_y*mpl_height), xycoords='data', frameon=False)
+    ax.add_artist(ab)
+    # car count
+    ax.text(car_loc*mpl_width, text_y*mpl_height, str(car), horizontalalignment='center', fontsize=fontsize, color=textcolor)
+
+    # bike icon
+    fn = os.path.join(iconpath, 'bike.png')
+    arr_img = plt.imread(fn, format='png')
+    im = OffsetImage(arr_img, zoom=0.7)
+    ab = AnnotationBbox(im, (bike_loc*mpl_width, icon_y*mpl_height), xycoords='data', frameon=False)
+    ax.add_artist(ab)
+    # bike count
+    ax.text(bike_loc*mpl_width, text_y*mpl_height, str(bike), horizontalalignment='center', fontsize=fontsize, color=textcolor)
+
+    # ped icon
+    fn = os.path.join(iconpath, 'pedestrian.png')
+    arr_img = plt.imread(fn, format='png')
+    im = OffsetImage(arr_img, zoom=0.7)
+    ab = AnnotationBbox(im, (ped_loc*mpl_width, icon_y*mpl_height), xycoords='data', frameon=False)
+    ax.add_artist(ab)
+    # bike count
+    ax.text(ped_loc*mpl_width, text_y*mpl_height, str(pedestrian), horizontalalignment='center', fontsize=fontsize, color=textcolor)
+
+    fig.savefig(save_path, dpi=dpi, bbox_inches=0, pad_inches=0, facecolor=facecolor, format='jpg')
+    plt.close()
+
